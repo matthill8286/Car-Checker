@@ -1,5 +1,6 @@
 'use client';
 
+import { findLapses } from '@carcheck/core';
 import { useState } from 'react';
 import type { Check } from '@/api/client';
 import { formatDate, formatNumber } from './format';
@@ -15,27 +16,6 @@ const PASS_Y = 42;
 const BAR_Y = 60;
 const AXIS_Y = 84;
 const HEIGHT = 100;
-
-interface Lapse {
-  from: string;
-  to: string;
-  days: number;
-}
-
-/** Periods between one certificate expiring and the next pass. */
-export function findLapses(tests: readonly MotTest[]): Lapse[] {
-  const passes = tests
-    .filter((t) => t.result === 'passed' && t.expiryDate)
-    .sort((a, b) => a.completedAt.localeCompare(b.completedAt));
-  const lapses: Lapse[] = [];
-  for (let i = 1; i < passes.length; i++) {
-    const expiry = passes[i - 1]!.expiryDate!;
-    const next = passes[i]!.completedAt.slice(0, 10);
-    const days = Math.round((Date.parse(next) - Date.parse(expiry)) / DAY);
-    if (days > 0) lapses.push({ from: expiry, to: next, days });
-  }
-  return lapses;
-}
 
 function describe(test: MotTest) {
   const counts = test.defects.reduce<Record<string, number>>((acc, d) => {
@@ -217,12 +197,6 @@ export function MotTimeline({ tests }: { tests: readonly MotTest[] }) {
           </span>
         )}
       </figcaption>
-      {lapses.map((l) => (
-        <p key={l.from} className="warning">
-          ⚠ No valid MOT for {l.days} {l.days === 1 ? 'day' : 'days'}, {formatDate(l.from)} to{' '}
-          {formatDate(l.to)}.
-        </p>
-      ))}
     </figure>
   );
 }

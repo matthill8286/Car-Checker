@@ -2,6 +2,7 @@ import type { SourceId } from '@carcheck/core';
 import type { Check } from '@/api/client';
 import { DefectHeatmap } from './DefectHeatmap';
 import { DefectTable } from './DefectTable';
+import { InsightList, VerdictPanel } from './Insights';
 import { formatDate, formatDateTime, formatNumber, SOURCE_NAMES } from './format';
 import { MileageChart } from './MileageChart';
 import { MotTimeline } from './MotTimeline';
@@ -132,11 +133,19 @@ function MileagePanel({ record, runs }: { record: Record | null; runs: SourceRun
               <> · about {formatNumber(m.averagePerYear, m.unit ?? '')} a year</>
             )}
           </p>
-          {m.anomalies.map((a) => (
-            <p key={`${a.from.date}-${a.to.date}`} className="warning">
-              ⚠ {a.message}
-            </p>
-          ))}
+          {record?.insights ? (
+            <InsightList
+              items={record.insights.items}
+              areas={['mileage']}
+              hide={['mileage.average']}
+            />
+          ) : (
+            m.anomalies.map((a) => (
+              <p key={`${a.from.date}-${a.to.date}`} className="warning">
+                ⚠ {a.message}
+              </p>
+            ))
+          )}
           <MileageChart mileage={m} />
         </>
       )}
@@ -177,6 +186,7 @@ function MotHistory({ record, runs }: { record: Record | null; runs: SourceRun[]
       hasData={tests.length > 0}
       empty="No MOT tests on record. Cars under three years old have not needed one yet."
     >
+      {record?.insights && <InsightList items={record.insights.items} areas={['mot', 'defects']} />}
       <MotTimeline tests={tests} />
       <ol className="mot-list">
         {tests.map((t) => (
@@ -278,6 +288,7 @@ export function CheckResult({
         ))}
       </ul>
 
+      <VerdictPanel insights={record?.insights} runs={check.sources} />
       <Panel
         title="Summary"
         runs={check.sources}
@@ -286,6 +297,7 @@ export function CheckResult({
         empty="No source had a record for this vehicle."
       >
         {record && <StatusCards record={record} />}
+        {record?.insights && <InsightList items={record.insights.items} areas={['status']} />}
       </Panel>
       <Panel
         title="Vehicle"
@@ -306,6 +318,7 @@ export function CheckResult({
             ))}
           </dl>
         )}
+        {record?.insights && <InsightList items={record.insights.items} areas={['sources']} />}
         {record && record.conflicts.length > 0 && (
           <div className="conflicts">
             <h4>Sources disagree</h4>
