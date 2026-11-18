@@ -585,6 +585,354 @@
           "anomalies"
         ]
       },
+      "DefectCategoryInput": {
+        "type": "string",
+        "enum": [
+          "brakes",
+          "tyres",
+          "suspension",
+          "corrosion",
+          "lights",
+          "emissions",
+          "other"
+        ]
+      },
+      "InsightSeverityInput": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "warning",
+          "info",
+          "good"
+        ]
+      },
+      "InsightInput": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "enum": [
+              "mileage",
+              "mot",
+              "defects",
+              "sources",
+              "status"
+            ]
+          },
+          "severity": {
+            "$ref": "#/components/schemas/InsightSeverityInput"
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "rule",
+          "area",
+          "severity",
+          "title",
+          "detail"
+        ]
+      },
+      "MileageStallInput": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/OdometerInput"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ]
+          },
+          "to": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/OdometerInput"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ]
+          },
+          "increase": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "days": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "increase",
+          "days"
+        ]
+      },
+      "ExpectedMileageInput": {
+        "type": "object",
+        "properties": {
+          "ageYears": {
+            "type": "number"
+          },
+          "low": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "typical": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "high": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "actual": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "mi",
+              "km"
+            ]
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "low",
+              "typical",
+              "high"
+            ]
+          }
+        },
+        "required": [
+          "ageYears",
+          "low",
+          "typical",
+          "high",
+          "actual",
+          "unit",
+          "position"
+        ]
+      },
+      "MotLapseInput": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "days"
+        ]
+      },
+      "RepeatAdvisoryInput": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/DefectCategoryInput"
+          },
+          "tests": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "latestText": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item",
+          "category",
+          "tests",
+          "dates",
+          "latestText"
+        ]
+      },
+      "SourceMismatchInput": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "colour",
+              "fuelType",
+              "engineCapacityCc"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/components/schemas/SourceIdInput"
+                },
+                "value": {}
+              },
+              "required": [
+                "source",
+                "value"
+              ]
+            }
+          }
+        },
+        "required": [
+          "field",
+          "values"
+        ]
+      },
+      "VerdictInput": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "string",
+            "enum": [
+              "avoid",
+              "caution",
+              "good",
+              "unknown"
+            ]
+          },
+          "headline": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InsightInput"
+            }
+          }
+        },
+        "required": [
+          "rating",
+          "headline",
+          "reasons"
+        ]
+      },
+      "RecordInsightsInput": {
+        "type": "object",
+        "properties": {
+          "mileage": {
+            "type": "object",
+            "properties": {
+              "stalls": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MileageStallInput"
+                }
+              },
+              "expected": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ExpectedMileageInput"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "stalls",
+              "expected"
+            ]
+          },
+          "mot": {
+            "type": "object",
+            "properties": {
+              "lapses": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MotLapseInput"
+                }
+              },
+              "repeatAdvisories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepeatAdvisoryInput"
+                }
+              }
+            },
+            "required": [
+              "lapses",
+              "repeatAdvisories"
+            ]
+          },
+          "mismatches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceMismatchInput"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InsightInput"
+            }
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/VerdictInput"
+          }
+        },
+        "required": [
+          "mileage",
+          "mot",
+          "mismatches",
+          "items",
+          "verdict"
+        ]
+      },
       "VehicleRecordInput": {
         "type": "object",
         "properties": {
@@ -611,6 +959,9 @@
           },
           "mileage": {
             "$ref": "#/components/schemas/MileageSummaryInput"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/RecordInsightsInput"
           }
         },
         "required": [
@@ -1609,6 +1960,367 @@
         ],
         "additionalProperties": false
       },
+      "DefectCategory": {
+        "type": "string",
+        "enum": [
+          "brakes",
+          "tyres",
+          "suspension",
+          "corrosion",
+          "lights",
+          "emissions",
+          "other"
+        ]
+      },
+      "InsightSeverity": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "warning",
+          "info",
+          "good"
+        ]
+      },
+      "Insight": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "enum": [
+              "mileage",
+              "mot",
+              "defects",
+              "sources",
+              "status"
+            ]
+          },
+          "severity": {
+            "$ref": "#/components/schemas/InsightSeverity"
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "rule",
+          "area",
+          "severity",
+          "title",
+          "detail"
+        ],
+        "additionalProperties": false
+      },
+      "MileageStall": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/Odometer"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ],
+            "additionalProperties": false
+          },
+          "to": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/Odometer"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ],
+            "additionalProperties": false
+          },
+          "increase": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "days": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "increase",
+          "days"
+        ],
+        "additionalProperties": false
+      },
+      "ExpectedMileage": {
+        "type": "object",
+        "properties": {
+          "ageYears": {
+            "type": "number"
+          },
+          "low": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "typical": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "high": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "actual": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "mi",
+              "km"
+            ]
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "low",
+              "typical",
+              "high"
+            ]
+          }
+        },
+        "required": [
+          "ageYears",
+          "low",
+          "typical",
+          "high",
+          "actual",
+          "unit",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "MotLapse": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "days"
+        ],
+        "additionalProperties": false
+      },
+      "RepeatAdvisory": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/DefectCategory"
+          },
+          "tests": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "latestText": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item",
+          "category",
+          "tests",
+          "dates",
+          "latestText"
+        ],
+        "additionalProperties": false
+      },
+      "SourceMismatch": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "colour",
+              "fuelType",
+              "engineCapacityCc"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/components/schemas/SourceId"
+                },
+                "value": {}
+              },
+              "required": [
+                "source",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "field",
+          "values"
+        ],
+        "additionalProperties": false
+      },
+      "Verdict": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "string",
+            "enum": [
+              "avoid",
+              "caution",
+              "good",
+              "unknown"
+            ]
+          },
+          "headline": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Insight"
+            }
+          }
+        },
+        "required": [
+          "rating",
+          "headline",
+          "reasons"
+        ],
+        "additionalProperties": false
+      },
+      "RecordInsights": {
+        "type": "object",
+        "properties": {
+          "mileage": {
+            "type": "object",
+            "properties": {
+              "stalls": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MileageStall"
+                }
+              },
+              "expected": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ExpectedMileage"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "stalls",
+              "expected"
+            ],
+            "additionalProperties": false
+          },
+          "mot": {
+            "type": "object",
+            "properties": {
+              "lapses": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MotLapse"
+                }
+              },
+              "repeatAdvisories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RepeatAdvisory"
+                }
+              }
+            },
+            "required": [
+              "lapses",
+              "repeatAdvisories"
+            ],
+            "additionalProperties": false
+          },
+          "mismatches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceMismatch"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Insight"
+            }
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "mileage",
+          "mot",
+          "mismatches",
+          "items",
+          "verdict"
+        ],
+        "additionalProperties": false
+      },
       "VehicleRecord": {
         "type": "object",
         "properties": {
@@ -1635,6 +2347,9 @@
           },
           "mileage": {
             "$ref": "#/components/schemas/MileageSummary"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/RecordInsights"
           }
         },
         "required": [

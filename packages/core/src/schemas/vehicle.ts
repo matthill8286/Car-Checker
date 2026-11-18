@@ -110,15 +110,3 @@ export const MileageSummarySchema = z
   })
   .meta({ id: 'MileageSummary' });
 export type MileageSummary = z.infer<typeof MileageSummarySchema>;
-
-export const VehicleRecordSchema = z
-  .object({
-    facts: VehicleFactsSchema,
-    /** Which source supplied each fact that made it into `facts`. */
-    provenance: z.record(z.string(), SourceIdSchema),
-    conflicts: z.array(FactConflictSchema),
-    motTests: z.array(MotTestSchema),
-    mileage: MileageSummarySchema,
-  })
-  .meta({ id: 'VehicleRecord' });
-export type VehicleRecord = z.infer<typeof VehicleRecordSchema>;
