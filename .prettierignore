@@ -5,3 +5,4 @@ pnpm-lock.yaml
 apps/web/src/api/schema.d.ts
 apps/api/openapi.json
 apps/web/next-env.d.ts
+apps/api/drizzle

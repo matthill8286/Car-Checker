@@ -6,6 +6,8 @@ export const CreateCheckBodySchema = z
   .object({
     query: z.string().trim().min(1).max(40),
     hint: QueryHintSchema.default('auto'),
+    /** Skip cached source responses and ask every source again. */
+    fresh: z.boolean().default(false),
   })
   .meta({ id: 'CreateCheckBody' });
 export type CreateCheckBody = z.input<typeof CreateCheckBodySchema>;
@@ -27,6 +29,10 @@ export const SourceRunSchema = z
     durationMs: z.number().int().nullable(),
     /** True when the result came from recorded fixtures rather than the live API. */
     mock: z.boolean(),
+    /** True when the answer was reused from an earlier check instead of asking the source. */
+    cached: z.boolean(),
+    /** When the source actually answered; earlier than `finishedAt` for a cached result. */
+    fetchedAt: z.string().nullable(),
   })
   .meta({ id: 'SourceRun' });
 export type SourceRun = z.infer<typeof SourceRunSchema>;
@@ -51,6 +57,32 @@ export const CheckSchema = z
   })
   .meta({ id: 'Check' });
 export type Check = z.infer<typeof CheckSchema>;
+
+export const CheckSummarySchema = z
+  .object({
+    id: z.string(),
+    query: z.string(),
+    status: CheckStatusSchema,
+    identifier: IdentifierSchema,
+    /** Make and model when a source found the vehicle. */
+    title: z.string().nullable(),
+    createdAt: z.string(),
+  })
+  .meta({ id: 'CheckSummary' });
+export type CheckSummary = z.infer<typeof CheckSummarySchema>;
+
+export function summariseCheck(check: Check): CheckSummary {
+  const facts = check.record?.facts;
+  const title = facts ? [facts.make, facts.model].filter(Boolean).join(' ') || null : null;
+  return {
+    id: check.id,
+    query: check.query,
+    status: check.status,
+    identifier: check.identifier,
+    title,
+    createdAt: check.createdAt,
+  };
+}
 
 /** Events on `GET /api/checks/:id/events`. Each SSE `event:` name matches `type`. */
 export const CheckEventSchema = z

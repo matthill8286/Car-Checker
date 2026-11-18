@@ -36,15 +36,29 @@ is reported as skipped rather than failing the check.
 
 ## API
 
-| Route                        |                                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| `POST /api/checks`           | `{ "query": "AB12 CDE", "hint": "auto" \| "GB" \| "NL" \| "VIN" }` → `202` with the running check |
-| `GET /api/checks/:id`        | The check, its per-source status and the merged record so far                                     |
-| `GET /api/checks/:id/events` | Server-sent events: `snapshot`, then `source` and `record` as sources answer, then `complete`     |
-| `GET /api/health`            | Mode and which sources are configured                                                             |
-| `GET /api/docs`              | Swagger UI; `GET /api/openapi.json` for the document                                              |
+| Route                        |                                                                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `POST /api/checks`           | `{ "query": "AB12 CDE", "hint": "auto" \| "GB" \| "NL" \| "VIN", "fresh": false }` → `202` with the running check |
+| `GET /api/checks/:id`        | The check, its per-source status and the merged record so far                                                     |
+| `GET /api/checks/:id/events` | Server-sent events: `snapshot`, then `source` and `record` as sources answer, then `complete`                     |
+| `GET /api/health`            | Mode and which sources are configured                                                                             |
+| `GET /api/docs`              | Swagger UI; `GET /api/openapi.json` for the document                                                              |
 
-Checks are held in memory for now; Postgres via Drizzle arrives in M2.
+## Storage and caching
+
+With `DATABASE_URL` set, checks and every source answer are stored in Postgres (Drizzle; schema in
+`apps/api/src/db/schema.ts`, migrations in `apps/api/drizzle`, applied on startup unless
+`DB_MIGRATE=false`). Without it, both live in memory, which is fine for development.
+
+- `checks`: one row per check; its sources, record and identifiers as JSONB.
+- `source_responses`: every answer a source gave, with the raw upstream payload as JSONB.
+
+A source's stored answer is reused while fresh: 24 hours for DVLA, DVSA and RDW, 30 days for
+NHTSA, 1 hour for "not found". Errors are never cached. `"fresh": true` (or "Check again" in the
+UI) skips the cache. The terms behind these choices are in `docs/source-terms.md`.
+
+After changing the schema, run `pnpm --filter @carcheck/api db:generate` and commit the new
+migration. Tests run against an in-process Postgres (PGlite), so they need no database.
 
 ## Sources
 
@@ -68,6 +82,17 @@ cp .env.example .env   # set CARCHECK_MODE=live, keys, and PROXY_NETWORK
 docker compose up -d --build
 ```
 
+On the server, give the app its own database and role in the existing Postgres (not Supabase's
+internal one), then set `DATABASE_URL` in `.env`:
+
+```sql
+CREATE ROLE carcheck LOGIN PASSWORD '…';
+CREATE DATABASE carcheck OWNER carcheck;
+```
+
+The api container must be able to reach that Postgres: either put it on the Postgres container's
+Docker network or use the host's address.
+
 The stack joins the existing reverse proxy's Docker network (`PROXY_NETWORK`) and publishes no
 ports. Point the chosen subdomain at it in the existing proxy: `/api` to `api:4000`, everything
 else to `web:3000`. If the proxy can only target one upstream, send everything to `web:3000`;
@@ -75,5 +100,5 @@ Next forwards `/api` to the API itself. Do not add a second proxy, and keep prox
 for `/api/checks/*/events` (the API sends `X-Accel-Buffering: no`).
 
 For a local container run without the server's proxy:
-`docker compose -f docker-compose.yml -f docker-compose.local.yml up --build` (mock mode, ports
-3000 and 4000).
+`docker compose -f docker-compose.yml -f docker-compose.local.yml up --build` (mock mode, its own
+Postgres on port 5433, web on 3000 and api on 4000).

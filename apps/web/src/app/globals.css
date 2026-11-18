@@ -393,6 +393,58 @@ button.link {
   color: var(--warn);
 }
 
+.refresh {
+  margin-left: auto;
+}
+
+.recent {
+  margin-top: 32px;
+}
+
+.recent h3 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.recent ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.recent-item {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recent-item[aria-current='true'] {
+  border-color: var(--accent);
+}
+
+.recent-plate {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.attribution {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.attribution a {
+  color: inherit;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
