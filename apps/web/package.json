@@ -1,0 +1,26 @@
+{
+  "name": "@carcheck/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "gen:client": "openapi-typescript ../api/openapi.json -o src/api/schema.d.ts"
+  },
+  "dependencies": {
+    "@carcheck/core": "workspace:*",
+    "next": "16.4.6",
+    "openapi-fetch": "^0.15.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "openapi-typescript": "^7.10.0"
+  }
+}

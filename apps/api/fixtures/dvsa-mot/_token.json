@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "body": {
+    "token_type": "Bearer",
+    "expires_in": 3599,
+    "access_token": "mock-token"
+  }
+}

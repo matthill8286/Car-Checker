@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "body": {
+    "registrationNumber": "WX65ABC",
+    "taxStatus": "SORN",
+    "motStatus": "Not valid",
+    "motExpiryDate": "2026-02-28",
+    "make": "BMW",
+    "monthOfFirstRegistration": "2015-09",
+    "yearOfManufacture": 2015,
+    "engineCapacity": 1995,
+    "co2Emissions": 111,
+    "fuelType": "DIESEL",
+    "markedForExport": false,
+    "colour": "BLACK",
+    "typeApproval": "M1",
+    "wheelplan": "2 AXLE RIGID BODY",
+    "euroStatus": "EURO 6",
+    "dateOfLastV5CIssued": "2025-11-02"
+  }
+}

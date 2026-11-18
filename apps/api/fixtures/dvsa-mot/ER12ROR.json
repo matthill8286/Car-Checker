@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "body": {
+    "registration": "ER12ROR",
+    "make": "VAUXHALL",
+    "model": "CORSA",
+    "firstUsedDate": "2012-06-01",
+    "fuelType": "Petrol",
+    "primaryColour": "Red",
+    "engineSize": "1229",
+    "hasOutstandingRecall": "No",
+    "motTests": [
+      {
+        "completedDate": "2026-05-30T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2027-05-31",
+        "odometerValue": "70100",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "300000000002",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2025-05-29T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2026-05-31",
+        "odometerValue": "64222",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "300000000001",
+        "dataSource": "DVSA",
+        "defects": []
+      }
+    ]
+  }
+}
