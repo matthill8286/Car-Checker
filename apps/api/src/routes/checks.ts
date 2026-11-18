@@ -1,6 +1,7 @@
 import {
   ApiErrorSchema,
   CheckSchema,
+  CheckSummarySchema,
   CreateCheckBodySchema,
   type Check,
   type CheckEvent,
@@ -48,7 +49,9 @@ export function checkRoutes(deps: {
       },
       async (request, reply) => {
         try {
-          const { check } = await deps.orchestrator.start(request.body.query, request.body.hint);
+          const { check } = await deps.orchestrator.start(request.body.query, request.body.hint, {
+            fresh: request.body.fresh,
+          });
           const self = `/api/checks/${check.id}`;
           return reply
             .code(202)
@@ -63,6 +66,21 @@ export function checkRoutes(deps: {
           throw err;
         }
       },
+    );
+
+    app.get(
+      '/api/checks',
+      {
+        schema: {
+          tags: ['checks'],
+          summary: 'List recent checks, newest first',
+          querystring: z.object({ limit: z.coerce.number().int().min(1).max(100).default(20) }),
+          response: {
+            200: z.object({ checks: z.array(CheckSummarySchema) }).meta({ id: 'CheckList' }),
+          },
+        },
+      },
+      async (request) => ({ checks: await deps.store.list(request.query.limit) }),
     );
 
     app.get(

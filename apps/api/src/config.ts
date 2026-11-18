@@ -12,6 +12,20 @@ const ConfigSchema = z.object({
   FIXTURES_DIR: z.string().default(fileURLToPath(new URL('../fixtures', import.meta.url))),
   /** Comma-separated origins allowed to call the API from a browser. Empty means same origin only. */
   CORS_ORIGIN: z.string().default(''),
+  /** Postgres connection string. Without it, checks and source answers are kept in memory. */
+  DATABASE_URL: z.string().optional(),
+  /** Apply pending migrations at startup. */
+  DB_MIGRATE: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  /** Reuse a source's stored answer while it is fresh (see checks/cache.ts for TTLs). */
+  CACHE_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  /** Overrides every source's cache TTL, in hours. */
+  CACHE_TTL_HOURS: z.coerce.number().nonnegative().optional(),
   SOURCE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 
   DVLA_API_KEY: z.string().optional(),

@@ -5,6 +5,7 @@ import type { components, paths } from './schema';
 export type Check = components['schemas']['Check'];
 export type CreatedCheck = components['schemas']['CreatedCheck'];
 export type ApiError = components['schemas']['ApiError'];
+export type CheckSummary = components['schemas']['CheckSummary'];
 
 /**
  * Empty means same origin: the reverse proxy (or Next's rewrite in dev) routes `/api` to the
@@ -16,8 +17,12 @@ export const api = createClient<paths>({ baseUrl });
 
 export type StartResult = { ok: true; created: CreatedCheck } | { ok: false; error: ApiError };
 
-export async function startCheck(query: string, hint: QueryHint = 'auto'): Promise<StartResult> {
-  const { data, error } = await api.POST('/api/checks', { body: { query, hint } });
+export async function startCheck(
+  query: string,
+  hint: QueryHint = 'auto',
+  fresh = false,
+): Promise<StartResult> {
+  const { data, error } = await api.POST('/api/checks', { body: { query, hint, fresh } });
   if (data) return { ok: true, created: data };
   return {
     ok: false,
@@ -28,6 +33,11 @@ export async function startCheck(query: string, hint: QueryHint = 'auto'): Promi
 export async function getCheck(id: string): Promise<Check | null> {
   const { data } = await api.GET('/api/checks/{id}', { params: { path: { id } } });
   return data ?? null;
+}
+
+export async function listChecks(limit = 10): Promise<CheckSummary[]> {
+  const { data } = await api.GET('/api/checks', { params: { query: { limit } } });
+  return data?.checks ?? [];
 }
 
 const EVENT_TYPES: ReadonlyArray<CheckEvent['type']> = ['snapshot', 'source', 'record', 'complete'];

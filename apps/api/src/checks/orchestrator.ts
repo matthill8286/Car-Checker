@@ -10,9 +10,11 @@ import {
   type SourceRun,
 } from '@carcheck/core';
 import type { FastifyBaseLogger } from 'fastify';
-import type { SourceAdapter } from '../adapters/types.js';
+import type { AdapterOutcome, SourceAdapter } from '../adapters/types.js';
 import { UpstreamError, type HttpClient } from '../http/client.js';
+import type { CachePolicy } from './cache.js';
 import type { CheckEvents } from './events.js';
+import type { SourceResponseStore } from './responses.js';
 import type { CheckStore } from './store.js';
 
 export class InvalidQueryError extends Error {
@@ -29,6 +31,8 @@ export interface OrchestratorDeps {
   adapters: SourceAdapter[];
   http: HttpClient;
   store: CheckStore;
+  responses: SourceResponseStore;
+  cache: CachePolicy;
   events: CheckEvents;
   log: FastifyBaseLogger;
   timeoutMs: number;
@@ -49,7 +53,11 @@ export class CheckOrchestrator {
    * Validates the query, saves a running check and starts every applicable source in the
    * background. Returns as soon as the check is saved; progress arrives through `events`.
    */
-  async start(query: string, hint: QueryHint): Promise<{ check: Check; done: Promise<Check> }> {
+  async start(
+    query: string,
+    hint: QueryHint,
+    options: { fresh?: boolean } = {},
+  ): Promise<{ check: Check; done: Promise<Check> }> {
     const detected = detectIdentifier(query, hint, this.now());
     if (!detected.ok) throw new InvalidQueryError(detected.message, detected.details);
 
@@ -67,7 +75,7 @@ export class CheckOrchestrator {
     this.addRuns(check, detected.identifier);
     await this.deps.store.save(check);
 
-    const done = this.run(check).catch(async (err: unknown) => {
+    const done = this.run(check, options.fresh ?? false).catch(async (err: unknown) => {
       this.deps.log.error({ err, checkId: check.id }, 'check failed unexpectedly');
       check.status = 'failed';
       check.completedAt = this.now().toISOString();
@@ -94,13 +102,15 @@ export class CheckOrchestrator {
         finishedAt: null,
         durationMs: null,
         mock: this.deps.http.mock,
+        cached: false,
+        fetchedAt: null,
       });
       if (!reason) queued.push(adapter);
     }
     return queued;
   }
 
-  private async run(check: Check): Promise<Check> {
+  private async run(check: Check, fresh: boolean): Promise<Check> {
     const contributions: SourceContribution[] = [];
     let round: Array<{ adapter: SourceAdapter; identifier: Identifier }> = this.deps.adapters
       .filter((a) => check.sources.some((s) => s.source === a.id && s.status === 'pending'))
@@ -110,7 +120,7 @@ export class CheckOrchestrator {
       const discovered: Identifier[] = [];
       await Promise.all(
         round.map(async ({ adapter, identifier }) => {
-          const found = await this.runOne(check, adapter, identifier, contributions);
+          const found = await this.runOne(check, adapter, identifier, contributions, fresh);
           discovered.push(...found);
         }),
       );
@@ -140,6 +150,7 @@ export class CheckOrchestrator {
     adapter: SourceAdapter,
     identifier: Identifier,
     contributions: SourceContribution[],
+    fresh: boolean,
   ): Promise<Identifier[]> {
     const run = check.sources.find((s) => s.source === adapter.id);
     if (!run) return [];
@@ -150,11 +161,21 @@ export class CheckOrchestrator {
 
     let discovered: Identifier[] = [];
     try {
-      const outcome = await adapter.lookup(identifier, {
-        http: this.deps.http,
-        signal: AbortSignal.timeout(this.deps.timeoutMs),
-        now: this.now,
-      });
+      const cached = fresh ? null : await this.fromCache(adapter, identifier);
+      let outcome: AdapterOutcome;
+      if (cached) {
+        outcome = cached.outcome;
+        run.cached = true;
+        run.fetchedAt = cached.fetchedAt.toISOString();
+      } else {
+        outcome = await adapter.lookup(identifier, {
+          http: this.deps.http,
+          signal: AbortSignal.timeout(this.deps.timeoutMs),
+          now: this.now,
+        });
+        run.fetchedAt = this.now().toISOString();
+        await this.remember(check, adapter, identifier, outcome);
+      }
       if (outcome.status === 'ok') {
         run.status = 'ok';
         contributions.push(outcome.contribution);
@@ -176,6 +197,69 @@ export class CheckOrchestrator {
       this.deps.events.publish(check.id, { type: 'record', record: structuredClone(check.record) });
     }
     return discovered;
+  }
+
+  /** The latest stored answer from this source, if it is still within its TTL. */
+  private async fromCache(
+    adapter: SourceAdapter,
+    identifier: Identifier,
+  ): Promise<{ outcome: AdapterOutcome; fetchedAt: Date } | null> {
+    const { cache, responses, http, log } = this.deps;
+    if (!cache.enabled) return null;
+    const now = this.now().getTime();
+    try {
+      const hit = await responses.latest({
+        source: adapter.id,
+        identifier,
+        mock: http.mock,
+        notBefore: new Date(now - cache.ttlMs(adapter.id, 'ok')),
+      });
+      if (!hit) return null;
+      if (now - hit.fetchedAt.getTime() > cache.ttlMs(adapter.id, hit.outcome)) return null;
+      if (hit.outcome === 'not_found' || !hit.contribution) {
+        return { outcome: { status: 'not_found' }, fetchedAt: hit.fetchedAt };
+      }
+      return {
+        outcome: {
+          status: 'ok',
+          contribution: hit.contribution,
+          raw: hit.raw,
+          discovered: hit.discovered,
+        },
+        fetchedAt: hit.fetchedAt,
+      };
+    } catch (err) {
+      // A cache that cannot be read is a miss, not a failed source.
+      log.warn({ err, source: adapter.id }, 'cache lookup failed');
+      return null;
+    }
+  }
+
+  /** Stores what the source said. A failure here must not fail the check. */
+  private async remember(
+    check: Check,
+    adapter: SourceAdapter,
+    identifier: Identifier,
+    outcome: AdapterOutcome,
+  ): Promise<void> {
+    try {
+      await this.deps.responses.record({
+        source: adapter.id,
+        identifier: { kind: identifier.kind, value: identifier.value },
+        outcome: outcome.status,
+        raw: outcome.status === 'ok' ? outcome.raw : null,
+        contribution: outcome.status === 'ok' ? outcome.contribution : null,
+        discovered: outcome.status === 'ok' ? (outcome.discovered ?? []) : [],
+        mock: this.deps.http.mock,
+        fetchedAt: this.now(),
+        checkId: check.id,
+      });
+    } catch (err) {
+      this.deps.log.warn(
+        { err, source: adapter.id, checkId: check.id },
+        'could not store response',
+      );
+    }
   }
 
   private async publishRun(check: Check, run: SourceRun): Promise<void> {

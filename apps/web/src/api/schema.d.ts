@@ -47,7 +47,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List recent checks, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CheckList"];
+                    };
+                };
+            };
+        };
         put?: never;
         /** Start a check for a UK registration, Dutch plate or VIN */
         post: {
@@ -333,6 +355,8 @@ export interface components {
             query: string;
             /** @default auto */
             hint: components["schemas"]["QueryHintInput"];
+            /** @default false */
+            fresh: boolean;
         };
         /** @enum {string} */
         SourceRunStatusInput: "pending" | "running" | "ok" | "not_found" | "error" | "skipped";
@@ -345,6 +369,8 @@ export interface components {
             finishedAt: string | null;
             durationMs: number | null;
             mock: boolean;
+            cached: boolean;
+            fetchedAt: string | null;
         };
         /** @enum {string} */
         CheckStatusInput: "running" | "complete" | "partial" | "failed";
@@ -358,6 +384,14 @@ export interface components {
             record: components["schemas"]["VehicleRecordInput"] | null;
             createdAt: string;
             completedAt: string | null;
+        };
+        CheckSummaryInput: {
+            id: string;
+            query: string;
+            status: components["schemas"]["CheckStatusInput"];
+            identifier: components["schemas"]["IdentifierInput"];
+            title: string | null;
+            createdAt: string;
         };
         CheckEventInput: {
             /** @constant */
@@ -394,12 +428,17 @@ export interface components {
             /** @enum {string} */
             mode: "mock" | "live";
             version: string;
+            /** @enum {string} */
+            storage: "postgres" | "memory";
             sources: {
                 id: components["schemas"]["SourceIdInput"];
                 label: string;
                 available: boolean;
                 message: string | null;
             }[];
+        };
+        CheckListInput: {
+            checks: components["schemas"]["CheckSummaryInput"][];
         };
         /** @enum {string} */
         CountryCode: "GB" | "NL";
@@ -544,6 +583,8 @@ export interface components {
             query: string;
             /** @default auto */
             hint: components["schemas"]["QueryHint"];
+            /** @default false */
+            fresh: boolean;
         };
         /** @enum {string} */
         SourceRunStatus: "pending" | "running" | "ok" | "not_found" | "error" | "skipped";
@@ -556,6 +597,8 @@ export interface components {
             finishedAt: string | null;
             durationMs: number | null;
             mock: boolean;
+            cached: boolean;
+            fetchedAt: string | null;
         };
         /** @enum {string} */
         CheckStatus: "running" | "complete" | "partial" | "failed";
@@ -569,6 +612,14 @@ export interface components {
             record: components["schemas"]["VehicleRecord"] | null;
             createdAt: string;
             completedAt: string | null;
+        };
+        CheckSummary: {
+            id: string;
+            query: string;
+            status: components["schemas"]["CheckStatus"];
+            identifier: components["schemas"]["Identifier"];
+            title: string | null;
+            createdAt: string;
         };
         CheckEvent: {
             /** @constant */
@@ -605,12 +656,17 @@ export interface components {
             /** @enum {string} */
             mode: "mock" | "live";
             version: string;
+            /** @enum {string} */
+            storage: "postgres" | "memory";
             sources: {
                 id: components["schemas"]["SourceId"];
                 label: string;
                 available: boolean;
                 message: string | null;
             }[];
+        };
+        CheckList: {
+            checks: components["schemas"]["CheckSummary"][];
         };
     };
     responses: never;

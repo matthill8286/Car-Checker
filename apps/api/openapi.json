@@ -632,6 +632,10 @@
           "hint": {
             "default": "auto",
             "$ref": "#/components/schemas/QueryHintInput"
+          },
+          "fresh": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
@@ -693,6 +697,15 @@
           },
           "mock": {
             "type": "boolean"
+          },
+          "cached": {
+            "type": "boolean"
+          },
+          "fetchedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -703,7 +716,9 @@
           "startedAt",
           "finishedAt",
           "durationMs",
-          "mock"
+          "mock",
+          "cached",
+          "fetchedAt"
         ]
       },
       "CheckStatusInput": {
@@ -772,6 +787,40 @@
           "record",
           "createdAt",
           "completedAt"
+        ]
+      },
+      "CheckSummaryInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatusInput"
+          },
+          "identifier": {
+            "$ref": "#/components/schemas/IdentifierInput"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "status",
+          "identifier",
+          "title",
+          "createdAt"
         ]
       },
       "CheckEventInput": {
@@ -907,6 +956,13 @@
           "version": {
             "type": "string"
           },
+          "storage": {
+            "type": "string",
+            "enum": [
+              "postgres",
+              "memory"
+            ]
+          },
           "sources": {
             "type": "array",
             "items": {
@@ -941,7 +997,22 @@
           "status",
           "mode",
           "version",
+          "storage",
           "sources"
+        ]
+      },
+      "CheckListInput": {
+        "type": "object",
+        "properties": {
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckSummaryInput"
+            }
+          }
+        },
+        "required": [
+          "checks"
         ]
       },
       "CountryCode": {
@@ -1586,11 +1657,16 @@
           "hint": {
             "default": "auto",
             "$ref": "#/components/schemas/QueryHint"
+          },
+          "fresh": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
           "query",
-          "hint"
+          "hint",
+          "fresh"
         ],
         "additionalProperties": false
       },
@@ -1649,6 +1725,15 @@
           },
           "mock": {
             "type": "boolean"
+          },
+          "cached": {
+            "type": "boolean"
+          },
+          "fetchedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -1659,7 +1744,9 @@
           "startedAt",
           "finishedAt",
           "durationMs",
-          "mock"
+          "mock",
+          "cached",
+          "fetchedAt"
         ],
         "additionalProperties": false
       },
@@ -1729,6 +1816,41 @@
           "record",
           "createdAt",
           "completedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CheckSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "identifier": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "status",
+          "identifier",
+          "title",
+          "createdAt"
         ],
         "additionalProperties": false
       },
@@ -1872,6 +1994,13 @@
           "version": {
             "type": "string"
           },
+          "storage": {
+            "type": "string",
+            "enum": [
+              "postgres",
+              "memory"
+            ]
+          },
           "sources": {
             "type": "array",
             "items": {
@@ -1907,7 +2036,23 @@
           "status",
           "mode",
           "version",
+          "storage",
           "sources"
+        ],
+        "additionalProperties": false
+      },
+      "CheckList": {
+        "type": "object",
+        "properties": {
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckSummary"
+            }
+          }
+        },
+        "required": [
+          "checks"
         ],
         "additionalProperties": false
       }
@@ -1967,6 +2112,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List recent checks, newest first",
+        "tags": [
+          "checks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckList"
                 }
               }
             }
