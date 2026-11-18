@@ -160,6 +160,7 @@ export class CheckOrchestrator {
     await this.publishRun(check, run);
 
     let discovered: Identifier[] = [];
+    let asked = false;
     try {
       const cached = fresh ? null : await this.fromCache(adapter, identifier);
       let outcome: AdapterOutcome;
@@ -168,6 +169,7 @@ export class CheckOrchestrator {
         run.cached = true;
         run.fetchedAt = cached.fetchedAt.toISOString();
       } else {
+        asked = true;
         outcome = await adapter.lookup(identifier, {
           http: this.deps.http,
           signal: AbortSignal.timeout(this.deps.timeoutMs),
@@ -188,6 +190,8 @@ export class CheckOrchestrator {
     } catch (err) {
       run.status = 'error';
       run.message = describeError(err, adapter.label);
+      if (asked)
+        await this.remember(check, adapter, identifier, { status: 'error', message: run.message });
       this.deps.log.warn({ err, source: adapter.id, checkId: check.id }, 'source failed');
     }
     run.finishedAt = this.now().toISOString();
@@ -214,7 +218,7 @@ export class CheckOrchestrator {
         mock: http.mock,
         notBefore: new Date(now - cache.ttlMs(adapter.id, 'ok')),
       });
-      if (!hit) return null;
+      if (!hit || hit.outcome === 'error') return null;
       if (now - hit.fetchedAt.getTime() > cache.ttlMs(adapter.id, hit.outcome)) return null;
       if (hit.outcome === 'not_found' || !hit.contribution) {
         return { outcome: { status: 'not_found' }, fetchedAt: hit.fetchedAt };
@@ -235,19 +239,24 @@ export class CheckOrchestrator {
     }
   }
 
-  /** Stores what the source said. A failure here must not fail the check. */
+  /** Logs what the source said, or that it failed. A failure here must not fail the check. */
   private async remember(
     check: Check,
     adapter: SourceAdapter,
     identifier: Identifier,
-    outcome: AdapterOutcome,
+    outcome: AdapterOutcome | { status: 'error'; message: string },
   ): Promise<void> {
     try {
       await this.deps.responses.record({
         source: adapter.id,
         identifier: { kind: identifier.kind, value: identifier.value },
         outcome: outcome.status,
-        raw: outcome.status === 'ok' ? outcome.raw : null,
+        raw:
+          outcome.status === 'ok'
+            ? outcome.raw
+            : outcome.status === 'error'
+              ? { message: outcome.message }
+              : null,
         contribution: outcome.status === 'ok' ? outcome.contribution : null,
         discovered: outcome.status === 'ok' ? (outcome.discovered ?? []) : [],
         mock: this.deps.http.mock,

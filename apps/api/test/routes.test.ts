@@ -15,7 +15,7 @@ async function startCheck(query: string, hint?: string) {
 
 async function finished(id: string): Promise<Check> {
   // The orchestrator runs in the background; the SSE stream closes once it completes.
-  await app.inject({ method: 'GET', url: `/api/checks/${id}/events` });
+  await app.inject({ method: 'GET', url: `/api/checks/${id}/stream` });
   const res = await app.inject({ method: 'GET', url: `/api/checks/${id}` });
   return CheckSchema.parse(res.json());
 }
@@ -58,7 +58,7 @@ describe('POST /api/checks', () => {
       status: 'running',
       identifier: { kind: 'uk_reg', value: 'AB12CDE', display: 'AB12 CDE' },
     });
-    expect(body.links.events).toBe(`/api/checks/${body.check.id}/events`);
+    expect(body.links.stream).toBe(`/api/checks/${body.check.id}/stream`);
     expect(res.headers.location).toBe(`/api/checks/${body.check.id}`);
   });
 
@@ -144,11 +144,11 @@ describe('GET /api/checks/:id', () => {
   });
 });
 
-describe('GET /api/checks/:id/events', () => {
+describe('GET /api/checks/:id/stream', () => {
   it('streams snapshot, source and record events, then complete', async () => {
     app = await testApp({}, { fixtureLatencyMs: 20 });
     const id = (await startCheck('AB12CDE')).json().check.id;
-    const res = await app.inject({ method: 'GET', url: `/api/checks/${id}/events` });
+    const res = await app.inject({ method: 'GET', url: `/api/checks/${id}/stream` });
     expect(res.headers['content-type']).toContain('text/event-stream');
     const events = parseSse(res.body);
     for (const e of events) CheckEventSchema.parse(e.data);
@@ -169,6 +169,14 @@ describe('GET /api/checks/:id/events', () => {
     app = await testApp();
     const id = (await startCheck('LN74NEW')).json().check.id;
     await finished(id);
+    const res = await app.inject({ method: 'GET', url: `/api/checks/${id}/stream` });
+    expect(parseSse(res.body).map((e) => e.event)).toEqual(['snapshot', 'complete']);
+  });
+
+  it('still answers on the old /events path', async () => {
+    app = await testApp();
+    const id = (await startCheck('LN74NEW')).json().check.id;
+    await finished(id);
     const res = await app.inject({ method: 'GET', url: `/api/checks/${id}/events` });
     expect(parseSse(res.body).map((e) => e.event)).toEqual(['snapshot', 'complete']);
   });
@@ -177,7 +185,7 @@ describe('GET /api/checks/:id/events', () => {
     app = await testApp();
     const res = await app.inject({
       method: 'GET',
-      url: '/api/checks/00000000-0000-4000-8000-000000000000/events',
+      url: '/api/checks/00000000-0000-4000-8000-000000000000/stream',
     });
     expect(res.statusCode).toBe(404);
   });
@@ -191,7 +199,7 @@ describe('OpenAPI', () => {
     expect(Object.keys(doc.paths).sort()).toEqual([
       '/api/checks',
       '/api/checks/{id}',
-      '/api/checks/{id}/events',
+      '/api/checks/{id}/stream',
       '/api/health',
     ]);
     expect(doc.components.schemas).toHaveProperty('Check');

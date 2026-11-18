@@ -1,13 +1,16 @@
 import type { Identifier, SourceContribution, SourceId } from '@carcheck/core';
-import { and, desc, eq, gte } from 'drizzle-orm';
+import { and, desc, eq, gte, ne } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { sourceResponses } from '../db/schema.js';
 
-/** An answer a source gave, as stored. */
+/**
+ * One fetch from a source, as stored. Failed fetches are logged too (`outcome: 'error'`, with
+ * the message in `raw`) but are never reused as cached answers.
+ */
 export interface SourceResponse {
   source: SourceId;
   identifier: Pick<Identifier, 'kind' | 'value'>;
-  outcome: 'ok' | 'not_found';
+  outcome: 'ok' | 'not_found' | 'error';
   raw: unknown;
   contribution: SourceContribution | null;
   discovered: Identifier[];
@@ -24,7 +27,7 @@ export interface ResponseQuery {
   notBefore: Date;
 }
 
-/** Keeps every source answer and finds the latest one still fresh enough to reuse. */
+/** Logs every fetch and finds the latest answer still fresh enough to reuse. */
 export interface SourceResponseStore {
   record(response: SourceResponse): Promise<void>;
   latest(query: ResponseQuery): Promise<SourceResponse | null>;
@@ -48,6 +51,7 @@ export class InMemorySourceResponseStore implements SourceResponseStore {
         r.identifier.kind === q.identifier.kind &&
         r.identifier.value === q.identifier.value &&
         r.mock === q.mock &&
+        r.outcome !== 'error' &&
         r.fetchedAt >= q.notBefore
       ) {
         return structuredClone(r);
@@ -85,12 +89,13 @@ export class PostgresSourceResponseStore implements SourceResponseStore {
           eq(sourceResponses.identifierKind, q.identifier.kind),
           eq(sourceResponses.identifierValue, q.identifier.value),
           eq(sourceResponses.mock, q.mock),
+          ne(sourceResponses.outcome, 'error'),
           gte(sourceResponses.fetchedAt, q.notBefore),
         ),
       )
       .orderBy(desc(sourceResponses.fetchedAt))
       .limit(1);
-    if (!row) return null;
+    if (!row || row.outcome === 'error') return null;
     return {
       source: row.source,
       identifier: { kind: row.identifierKind, value: row.identifierValue },
