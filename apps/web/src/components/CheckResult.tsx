@@ -1,6 +1,6 @@
 import type { SourceId } from '@carcheck/core';
 import type { Check } from '@/api/client';
-import { formatDate, formatNumber, SOURCE_NAMES } from './format';
+import { formatDate, formatDateTime, formatNumber, SOURCE_NAMES } from './format';
 
 type Record = NonNullable<Check['record']>;
 type Facts = Record['facts'];
@@ -168,10 +168,13 @@ function MotHistory({ record }: { record: Record }) {
 export function CheckResult({
   check,
   onSearchAs,
+  onRefresh,
 }: {
   check: Check;
   onSearchAs: (kind: 'uk_reg' | 'nl_plate' | 'vin') => void;
+  onRefresh: () => void;
 }) {
+  const anyCached = check.sources.some((s) => s.cached);
   const record = check.record;
   const provenance = (record?.provenance ?? {}) as { [field: string]: SourceId };
   const facts = record?.facts;
@@ -187,6 +190,11 @@ export function CheckResult({
           <h2>{title || 'No vehicle details yet'}</h2>
           <p className="muted">{CHECK_STATUS[check.status]}</p>
         </div>
+        {anyCached && check.status !== 'running' && (
+          <button type="button" className="refresh" onClick={onRefresh}>
+            Check again
+          </button>
+        )}
       </header>
 
       {check.alternatives.length > 0 && (
@@ -214,6 +222,11 @@ export function CheckResult({
             <span className="source-name">{s.label}</span>
             <span className="source-status">{STATUS_TEXT[s.status]}</span>
             {s.mock && <span className="source-tag">fixture</span>}
+            {s.cached && (
+              <span className="source-tag" title="Reused from an earlier check">
+                saved {formatDateTime(s.fetchedAt)}
+              </span>
+            )}
             {s.message && <span className="source-message">{s.message}</span>}
           </li>
         ))}

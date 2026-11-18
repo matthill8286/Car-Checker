@@ -1,12 +1,28 @@
-# Local run without the server's proxy: `docker compose -f docker-compose.yml -f docker-compose.local.yml up`
+# Local run with its own Postgres and without the server's proxy: `docker compose -f docker-compose.yml -f docker-compose.local.yml up`
 services:
   api:
     env_file: !reset []
     environment:
       CARCHECK_MODE: mock
       MOCK_LATENCY_MS: 400
+      DATABASE_URL: postgres://carcheck:carcheck@db:5432/carcheck
+    depends_on:
+      db:
+        condition: service_healthy
     ports: ['4000:4000']
     networks: !override [default]
+  # Local only. On the server the API uses the existing Postgres instead.
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: carcheck
+      POSTGRES_PASSWORD: carcheck
+      POSTGRES_DB: carcheck
+    ports: ['5433:5432']
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'carcheck']
+      interval: 2s
+      retries: 15
   web:
     ports: ['3000:3000']
     networks: !override [default]

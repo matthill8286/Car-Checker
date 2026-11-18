@@ -11,6 +11,8 @@ const run = (source: 'dvla' | 'dvsa_mot', status: Check['sources'][number]['stat
   finishedAt: null,
   durationMs: null,
   mock: true,
+  cached: false,
+  fetchedAt: null,
 });
 
 const base: Check = {
