@@ -1,0 +1,111 @@
+{
+  "status": 200,
+  "body": {
+    "registration": "WX65ABC",
+    "make": "BMW",
+    "model": "320D",
+    "firstUsedDate": "2015-09-01",
+    "fuelType": "Diesel",
+    "primaryColour": "Black",
+    "registrationDate": "2015-09-01",
+    "manufactureDate": "2015-08-20",
+    "engineSize": "1995",
+    "hasOutstandingRecall": "Unknown",
+    "motTests": [
+      {
+        "completedDate": "2026-02-20T10:00:00.000Z",
+        "testResult": "FAILED",
+        "expiryDate": null,
+        "odometerValue": "91402",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000007",
+        "dataSource": "DVSA",
+        "defects": [
+          {
+            "text": "Nearside Front Suspension arm ball joint excessively worn (5.3.4 (a) (i))",
+            "type": "DANGEROUS",
+            "dangerous": true
+          },
+          {
+            "text": "Engine mounting deteriorated (6.1.1 (a))",
+            "type": "ADVISORY",
+            "dangerous": false
+          }
+        ]
+      },
+      {
+        "completedDate": "2025-02-25T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2026-02-28",
+        "odometerValue": "88230",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000006",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2024-02-26T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2025-02-28",
+        "odometerValue": "126540",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000005",
+        "dataSource": "DVSA",
+        "defects": [
+          {
+            "text": "Rear Tyre slightly damaged/cracking or perishing (5.2.3 (d) (ii))",
+            "type": "ADVISORY",
+            "dangerous": false
+          }
+        ]
+      },
+      {
+        "completedDate": "2023-02-27T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2024-02-28",
+        "odometerValue": "108771",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000004",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2022-02-24T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2023-02-28",
+        "odometerValue": "89320",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000003",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2020-02-21T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2021-02-28",
+        "odometerValue": "61200",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000002",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2018-08-30T10:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2019-09-01",
+        "odometerValue": "33010",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "200000000001",
+        "dataSource": "DVSA",
+        "defects": []
+      }
+    ]
+  }
+}
