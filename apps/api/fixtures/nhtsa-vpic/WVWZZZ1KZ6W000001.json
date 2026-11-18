@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "body": {
+    "Count": 1,
+    "Message": "Results returned successfully. NOTE: Any missing decoded values should be interpreted as NHTSA does not have data on the specific variable. Missing value should NOT be interpreted as an indication that a feature or technology is unavailable for a vehicle.",
+    "SearchCriteria": "VIN:WVWZZZ1KZ6W000001",
+    "Results": [
+      {
+        "VIN": "WVWZZZ1KZ6W000001",
+        "Make": "VOLKSWAGEN",
+        "Model": "",
+        "ModelYear": "2006",
+        "Trim": "",
+        "BodyClass": "",
+        "FuelTypePrimary": "",
+        "FuelTypeSecondary": "",
+        "DisplacementCC": "",
+        "EngineCylinders": "",
+        "PlantCountry": "GERMANY",
+        "Seats": "",
+        "ErrorCode": "1,14",
+        "ErrorText": "1 - Check Digit (9th position) does not calculate properly; 14 - Unable to provide information for all the characters in the VIN"
+      }
+    ]
+  }
+}

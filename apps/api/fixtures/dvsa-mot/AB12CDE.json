@@ -1,0 +1,150 @@
+{
+  "status": 200,
+  "body": {
+    "registration": "AB12CDE",
+    "make": "FORD",
+    "model": "FOCUS",
+    "firstUsedDate": "2012-04-20",
+    "fuelType": "Petrol",
+    "primaryColour": "Blue",
+    "registrationDate": "2012-04-20",
+    "manufactureDate": "2012-04-20",
+    "engineSize": "1596",
+    "hasOutstandingRecall": "No",
+    "motTests": [
+      {
+        "completedDate": "2026-04-15T09:12:44.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2027-04-17",
+        "odometerValue": "88310",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000010",
+        "dataSource": "DVSA",
+        "defects": [
+          {
+            "text": "Nearside Front Tyre worn close to legal limit/worn on edge (5.2.3 (e))",
+            "type": "ADVISORY",
+            "dangerous": false
+          }
+        ]
+      },
+      {
+        "completedDate": "2025-04-11T14:03:10.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2026-04-17",
+        "odometerValue": "80144",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000009",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2024-04-16T10:40:02.000Z",
+        "testResult": "FAILED",
+        "expiryDate": null,
+        "odometerValue": "72960",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000008",
+        "dataSource": "DVSA",
+        "defects": [
+          {
+            "text": "Offside Rear Brake disc(s) significantly and obviously worn (1.1.14 (a) (ii))",
+            "type": "MAJOR",
+            "dangerous": false
+          },
+          {
+            "text": "Front Brake pipe slightly corroded (1.1.11 (c))",
+            "type": "ADVISORY",
+            "dangerous": false
+          }
+        ]
+      },
+      {
+        "completedDate": "2024-04-16T15:22:31.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2025-04-17",
+        "odometerValue": "72962",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000007",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2023-04-12T11:01:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2024-04-17",
+        "odometerValue": "64015",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000006",
+        "dataSource": "DVSA",
+        "defects": [
+          {
+            "text": "Oil leak, but not excessive (8.4.1 (a) (i))",
+            "type": "MINOR",
+            "dangerous": false
+          }
+        ]
+      },
+      {
+        "completedDate": "2022-04-08T09:30:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2023-04-17",
+        "odometerValue": "55120",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000005",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2021-04-14T16:45:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2022-04-17",
+        "odometerValue": "47803",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000004",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2019-04-10T12:00:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2020-04-17",
+        "odometerValue": "38211",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000003",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2016-04-05T10:15:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2017-04-17",
+        "odometerValue": "17550",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000002",
+        "dataSource": "DVSA",
+        "defects": []
+      },
+      {
+        "completedDate": "2015-04-14T08:55:00.000Z",
+        "testResult": "PASSED",
+        "expiryDate": "2016-04-17",
+        "odometerValue": "9874",
+        "odometerUnit": "MI",
+        "odometerResultType": "READ",
+        "motTestNumber": "100000000001",
+        "dataSource": "DVSA",
+        "defects": []
+      }
+    ]
+  }
+}

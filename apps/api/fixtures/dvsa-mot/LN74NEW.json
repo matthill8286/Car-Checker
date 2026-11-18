@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "body": {
+    "registration": "LN74NEW",
+    "make": "TESLA",
+    "model": "MODEL 3",
+    "fuelType": "Electric",
+    "primaryColour": "White",
+    "registrationDate": "2024-12-12",
+    "manufactureDate": "2024-11-30",
+    "hasOutstandingRecall": "Unavailable",
+    "motTestDueDate": "2027-12-11"
+  }
+}
