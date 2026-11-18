@@ -342,6 +342,80 @@ export interface components {
             unit: ("mi" | "km") | null;
             anomalies: components["schemas"]["MileageAnomalyInput"][];
         };
+        /** @enum {string} */
+        DefectCategoryInput: "brakes" | "tyres" | "suspension" | "corrosion" | "lights" | "emissions" | "other";
+        /** @enum {string} */
+        InsightSeverityInput: "critical" | "warning" | "info" | "good";
+        InsightInput: {
+            rule: string;
+            /** @enum {string} */
+            area: "mileage" | "mot" | "defects" | "sources" | "status";
+            severity: components["schemas"]["InsightSeverityInput"];
+            title: string;
+            detail: string | null;
+        };
+        MileageStallInput: {
+            from: {
+                date: string;
+                odometer: components["schemas"]["OdometerInput"];
+            };
+            to: {
+                date: string;
+                odometer: components["schemas"]["OdometerInput"];
+            };
+            increase: number;
+            days: number;
+        };
+        ExpectedMileageInput: {
+            ageYears: number;
+            low: number;
+            typical: number;
+            high: number;
+            actual: number;
+            /** @enum {string} */
+            unit: "mi" | "km";
+            /** @enum {string} */
+            position: "low" | "typical" | "high";
+        };
+        MotLapseInput: {
+            from: string;
+            to: string;
+            days: number;
+        };
+        RepeatAdvisoryInput: {
+            item: string;
+            category: components["schemas"]["DefectCategoryInput"];
+            tests: number;
+            dates: string[];
+            latestText: string;
+        };
+        SourceMismatchInput: {
+            /** @enum {string} */
+            field: "colour" | "fuelType" | "engineCapacityCc";
+            values: {
+                source: components["schemas"]["SourceIdInput"];
+                value: unknown;
+            }[];
+        };
+        VerdictInput: {
+            /** @enum {string} */
+            rating: "avoid" | "caution" | "good" | "unknown";
+            headline: string;
+            reasons: components["schemas"]["InsightInput"][];
+        };
+        RecordInsightsInput: {
+            mileage: {
+                stalls: components["schemas"]["MileageStallInput"][];
+                expected: components["schemas"]["ExpectedMileageInput"] | null;
+            };
+            mot: {
+                lapses: components["schemas"]["MotLapseInput"][];
+                repeatAdvisories: components["schemas"]["RepeatAdvisoryInput"][];
+            };
+            mismatches: components["schemas"]["SourceMismatchInput"][];
+            items: components["schemas"]["InsightInput"][];
+            verdict: components["schemas"]["VerdictInput"];
+        };
         VehicleRecordInput: {
             facts: components["schemas"]["VehicleFactsInput"];
             provenance: {
@@ -350,6 +424,7 @@ export interface components {
             conflicts: components["schemas"]["FactConflictInput"][];
             motTests: components["schemas"]["MotTestInput"][];
             mileage: components["schemas"]["MileageSummaryInput"];
+            insights?: components["schemas"]["RecordInsightsInput"];
         };
         CreateCheckBodyInput: {
             query: string;
@@ -570,6 +645,80 @@ export interface components {
             unit: ("mi" | "km") | null;
             anomalies: components["schemas"]["MileageAnomaly"][];
         };
+        /** @enum {string} */
+        DefectCategory: "brakes" | "tyres" | "suspension" | "corrosion" | "lights" | "emissions" | "other";
+        /** @enum {string} */
+        InsightSeverity: "critical" | "warning" | "info" | "good";
+        Insight: {
+            rule: string;
+            /** @enum {string} */
+            area: "mileage" | "mot" | "defects" | "sources" | "status";
+            severity: components["schemas"]["InsightSeverity"];
+            title: string;
+            detail: string | null;
+        };
+        MileageStall: {
+            from: {
+                date: string;
+                odometer: components["schemas"]["Odometer"];
+            };
+            to: {
+                date: string;
+                odometer: components["schemas"]["Odometer"];
+            };
+            increase: number;
+            days: number;
+        };
+        ExpectedMileage: {
+            ageYears: number;
+            low: number;
+            typical: number;
+            high: number;
+            actual: number;
+            /** @enum {string} */
+            unit: "mi" | "km";
+            /** @enum {string} */
+            position: "low" | "typical" | "high";
+        };
+        MotLapse: {
+            from: string;
+            to: string;
+            days: number;
+        };
+        RepeatAdvisory: {
+            item: string;
+            category: components["schemas"]["DefectCategory"];
+            tests: number;
+            dates: string[];
+            latestText: string;
+        };
+        SourceMismatch: {
+            /** @enum {string} */
+            field: "colour" | "fuelType" | "engineCapacityCc";
+            values: {
+                source: components["schemas"]["SourceId"];
+                value: unknown;
+            }[];
+        };
+        Verdict: {
+            /** @enum {string} */
+            rating: "avoid" | "caution" | "good" | "unknown";
+            headline: string;
+            reasons: components["schemas"]["Insight"][];
+        };
+        RecordInsights: {
+            mileage: {
+                stalls: components["schemas"]["MileageStall"][];
+                expected: components["schemas"]["ExpectedMileage"] | null;
+            };
+            mot: {
+                lapses: components["schemas"]["MotLapse"][];
+                repeatAdvisories: components["schemas"]["RepeatAdvisory"][];
+            };
+            mismatches: components["schemas"]["SourceMismatch"][];
+            items: components["schemas"]["Insight"][];
+            verdict: components["schemas"]["Verdict"];
+        };
         VehicleRecord: {
             facts: components["schemas"]["VehicleFacts"];
             provenance: {
@@ -578,6 +727,7 @@ export interface components {
             conflicts: components["schemas"]["FactConflict"][];
             motTests: components["schemas"]["MotTest"][];
             mileage: components["schemas"]["MileageSummary"];
+            insights?: components["schemas"]["RecordInsights"];
         };
         CreateCheckBody: {
             query: string;

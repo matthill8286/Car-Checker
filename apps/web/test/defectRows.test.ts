@@ -47,17 +47,20 @@ describe('defect table rows', () => {
   it('flattens every defect with its severity and area', () => {
     expect(rows).toHaveLength(4);
     expect(rows.map((r) => [r.severity, r.category])).toEqual([
-      ['advisory', 'wheels'],
+      ['advisory', 'tyres'],
       ['major', 'brakes'],
-      ['dangerous', 'brakes'],
+      ['dangerous', 'corrosion'],
       ['minor', 'lights'],
     ]);
   });
 
   it('filters by severity, area and wording together', () => {
-    expect(queryDefects(rows, { ...base, category: 'brakes' })).toHaveLength(2);
+    expect(queryDefects(rows, { ...base, category: 'brakes' })).toHaveLength(1);
+    expect(
+      queryDefects(rows, { ...base, category: 'corrosion', severity: 'dangerous' }),
+    ).toHaveLength(1);
     expect(queryDefects(rows, { ...base, category: 'brakes', severity: 'dangerous' })).toHaveLength(
-      1,
+      0,
     );
     expect(queryDefects(rows, { ...base, text: 'CORRODED' }).map((r) => r.date)).toEqual([
       '2023-05-01',
