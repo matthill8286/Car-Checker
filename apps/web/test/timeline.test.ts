@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { findLapses } from '@carcheck/core';
 import type { Check } from '@/api/client';
-import { findLapses } from '@/components/MotTimeline';
 
 type MotTest = NonNullable<Check['record']>['motTests'][number];
 

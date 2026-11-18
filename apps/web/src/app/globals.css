@@ -860,3 +860,104 @@ button.link {
   color: var(--muted);
   font-weight: 400;
 }
+
+/* Insights and verdict */
+.insights {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.insight {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  align-items: start;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.insight-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--muted);
+  flex: none;
+}
+
+.insight-critical .insight-mark,
+.verdict-critical .insight-mark {
+  background: var(--status-critical);
+}
+
+.insight-warning .insight-mark,
+.verdict-warning .insight-mark {
+  background: var(--warn);
+  color: var(--bg);
+}
+
+.insight-good .insight-mark,
+.verdict-good .insight-mark {
+  background: var(--status-good);
+}
+
+.insight-info .insight-mark {
+  background: var(--series-1);
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+.insight-detail {
+  color: var(--muted);
+}
+
+.verdict-rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.verdict-rating .insight-mark {
+  width: 28px;
+  height: 28px;
+  font-size: 0.95rem;
+}
+
+.verdict-critical .verdict-rating {
+  color: var(--bad);
+}
+
+.verdict-warning .verdict-rating {
+  color: var(--warn);
+}
+
+.verdict-good .verdict-rating {
+  color: var(--good);
+}
+
+.verdict-headline {
+  margin: 4px 0 12px;
+}
+
+.verdict-note {
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.cards + .insights {
+  margin-top: 12px;
+}
+
+.defect-scroll td:last-child {
+  min-width: 220px;
+}

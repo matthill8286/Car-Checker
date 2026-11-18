@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IdentifierSchema, QueryHintSchema } from './identifier.js';
-import { SourceIdSchema, VehicleRecordSchema } from './vehicle.js';
+import { VehicleRecordSchema } from './record.js';
+import { SourceIdSchema } from './vehicle.js';
 
 export const CreateCheckBodySchema = z
   .object({

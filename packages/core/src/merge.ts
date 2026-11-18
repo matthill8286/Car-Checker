@@ -1,12 +1,7 @@
-import { summariseMileage } from './mileage.js';
-import type {
-  FactConflict,
-  FactKey,
-  MotTest,
-  SourceId,
-  VehicleFacts,
-  VehicleRecord,
-} from './schemas/vehicle.js';
+import { summariseMileage } from './insights/mileage.js';
+import type { FactConflict, FactKey, MotTest, SourceId, VehicleFacts } from './schemas/vehicle.js';
+import type { VehicleRecord } from './schemas/record.js';
+import { buildInsights } from './insights/verdict.js';
 
 export interface SourceContribution {
   source: SourceId;
@@ -109,11 +104,12 @@ export function mergeContributions(contributions: readonly SourceContribution[])
   motTests.sort((a, b) => b.completedAt.localeCompare(a.completedAt));
 
   const merged = facts as VehicleFacts;
-  return {
+  const record = {
     facts: merged,
     provenance,
     conflicts,
     motTests,
     mileage: summariseMileage(motTests, merged.firstRegistrationDate),
   };
+  return { ...record, insights: buildInsights(record) };
 }

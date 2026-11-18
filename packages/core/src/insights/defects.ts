@@ -1,53 +1,52 @@
-import type { DefectType, MotTest } from './schemas/vehicle.js';
+import type { DefectType, MotTest } from '../schemas/vehicle.js';
 
 /**
- * Defect areas, following the sections of the MOT inspection manual for cars (since May 2018
- * every DVSA defect ends with its manual reference, such as "(5.2.3 (e))").
+ * Defect areas from the build plan. Corrosion is its own area wherever it is, because rust is
+ * what a buyer most needs to see across the years.
  */
 export const DEFECT_CATEGORIES = [
-  { id: 'brakes', label: 'Brakes', section: 1 },
-  { id: 'steering', label: 'Steering', section: 2 },
-  { id: 'visibility', label: 'Visibility', section: 3 },
-  { id: 'lights', label: 'Lights and electrics', section: 4 },
-  { id: 'wheels', label: 'Tyres, wheels and suspension', section: 5 },
-  { id: 'body', label: 'Body and structure', section: 6 },
-  { id: 'emissions', label: 'Emissions and leaks', section: 8 },
-  { id: 'other', label: 'Other', section: null },
+  { id: 'brakes', label: 'Brakes' },
+  { id: 'tyres', label: 'Tyres and wheels' },
+  { id: 'suspension', label: 'Suspension and steering' },
+  { id: 'corrosion', label: 'Corrosion' },
+  { id: 'lights', label: 'Lights and electrics' },
+  { id: 'emissions', label: 'Emissions and leaks' },
+  { id: 'other', label: 'Other' },
 ] as const;
 
 export type DefectCategory = (typeof DEFECT_CATEGORIES)[number]['id'];
 
-const BY_SECTION = new Map<number, DefectCategory>(
-  DEFECT_CATEGORIES.filter((c) => c.section !== null).map((c) => [c.section as number, c.id]),
-);
-
-/** Keywords for older defects that carry no manual reference. Checked in order. */
+/** Keyword rules, checked in order; the first match wins. */
 const KEYWORDS: Array<[RegExp, DefectCategory]> = [
-  [/\bbrak|\bhandbrake|\bparking brake|\babs\b/i, 'brakes'],
-  [/\bsteer|\btrack rod|\brack\b|\bpower steering/i, 'steering'],
-  [/\bwiper|\bwindscreen|\bwasher|\bmirror|\bview\b/i, 'visibility'],
-  [/lamp|\blight|\bindicator|\bbulb|\breflector|\bbattery|\bwiring|\bhorn\b/i, 'lights'],
+  [/\bcorro|\brust|\bexcessively weakened|\bperforat/i, 'corrosion'],
+  [/\bbrak|\bhandbrake|\babs\b|\bcaliper|\bdiscs?\b|\bpads?\b/i, 'brakes'],
   [
-    /\btyre|\bwheel|\bsuspension|\bshock absorber|\bspring|\bball joint|\bbush|\bhub\b|\baxle|\bdrive shaft/i,
-    'wheels',
+    /\bsuspension|\bshock absorber|\bspring|\bball joint|\bbush|\barm\b|\banti-roll|\bstrut|\bsteer|\btrack rod|\brack\b|\bwheel bearing|\bdrive ?shaft|\bcv boot/i,
+    'suspension',
   ],
-  [
-    /\bcorro|\bbody|\bchassis|\bsill|\bsubframe|\bdoor|\bbonnet|\bseat|\bbelt|\bbumper|\bmount/i,
-    'body',
-  ],
-  [/\bexhaust|\bemission|\bsmoke|\bleak|\bnoise|\bcatalyst|\blambda/i, 'emissions'],
+  [/\btyre|\bwheel|\btread|\bsidewall|\bvalve\b/i, 'tyres'],
+  [/lamp|\blight|\bindicator|\bbulb|\breflector|\bbattery|\bwiring|\bhorn\b|\bbeam/i, 'lights'],
+  [/\bexhaust|\bemission|\bsmoke|\bleak|\bcatalyst|\blambda|\bdpf\b|\bparticulate/i, 'emissions'],
 ];
 
-/** Picks the area a defect belongs to, from its manual reference or failing that its wording. */
+/** Manual sections (and sub-sections) for defects whose wording matches no keyword. */
+function byReference(section: number, sub: number): DefectCategory | null {
+  if (section === 1) return 'brakes';
+  if (section === 2) return 'suspension';
+  if (section === 4) return 'lights';
+  if (section === 5) return sub === 2 ? 'tyres' : 'suspension';
+  if (section === 8) return 'emissions';
+  return null;
+}
+
+/**
+ * Picks the area a defect belongs to: by wording first (so "brake pipe corroded" counts as
+ * corrosion), then by its MOT manual reference such as "(5.2.3 (e))", else other.
+ */
 export function categoriseDefect(text: string): DefectCategory {
-  const ref = /\((\d+)\.\d+(?:\.\d+)?[^)]*\)?\s*\)?\s*$/.exec(text.trim());
-  if (ref) {
-    const section = Number(ref[1]);
-    const byRef = BY_SECTION.get(section);
-    if (byRef) return byRef;
-    if (section === 0 || section === 7) return 'other';
-  }
   for (const [pattern, category] of KEYWORDS) if (pattern.test(text)) return category;
+  const ref = /\((\d+)\.(\d+)(?:\.\d+)?[^)]*\)?\s*\)?\s*$/.exec(text.trim());
+  if (ref) return byReference(Number(ref[1]), Number(ref[2])) ?? 'other';
   return 'other';
 }
 
