@@ -924,13 +924,13 @@
               "self": {
                 "type": "string"
               },
-              "events": {
+              "stream": {
                 "type": "string"
               }
             },
             "required": [
               "self",
-              "events"
+              "stream"
             ]
           }
         },
@@ -1960,13 +1960,13 @@
               "self": {
                 "type": "string"
               },
-              "events": {
+              "stream": {
                 "type": "string"
               }
             },
             "required": [
               "self",
-              "events"
+              "stream"
             ],
             "additionalProperties": false
           }
@@ -2192,7 +2192,7 @@
         }
       }
     },
-    "/api/checks/{id}/events": {
+    "/api/checks/{id}/stream": {
       "get": {
         "summary": "Stream progress as server-sent events",
         "tags": [

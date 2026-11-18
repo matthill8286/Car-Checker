@@ -44,9 +44,9 @@ export const checks = pgTable(
 );
 
 /**
- * Every answer a source gave, kept verbatim. `raw` is the upstream payload so records can be
- * re-normalised later; `contribution` is what the adapter made of it, reused by the cache.
- * Errors are not stored: only answers.
+ * The fetch log: every call to a source, kept verbatim. `raw` is the upstream payload so
+ * records can be re-normalised later (or `{ message }` for a failed fetch); `contribution` is
+ * what the adapter made of it, reused by the cache. Failed fetches are never served from cache.
  */
 export const sourceResponses = pgTable(
   'source_responses',
@@ -55,7 +55,7 @@ export const sourceResponses = pgTable(
     source: text('source').$type<SourceId>().notNull(),
     identifierKind: text('identifier_kind').$type<Identifier['kind']>().notNull(),
     identifierValue: text('identifier_value').notNull(),
-    outcome: text('outcome').$type<'ok' | 'not_found'>().notNull(),
+    outcome: text('outcome').$type<'ok' | 'not_found' | 'error'>().notNull(),
     raw: jsonb('raw'),
     contribution: jsonb('contribution').$type<SourceContribution>(),
     discovered: jsonb('discovered').$type<Identifier[]>().notNull(),

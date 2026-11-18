@@ -40,7 +40,7 @@ is reported as skipped rather than failing the check.
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `POST /api/checks`           | `{ "query": "AB12 CDE", "hint": "auto" \| "GB" \| "NL" \| "VIN", "fresh": false }` → `202` with the running check |
 | `GET /api/checks/:id`        | The check, its per-source status and the merged record so far                                                     |
-| `GET /api/checks/:id/events` | Server-sent events: `snapshot`, then `source` and `record` as sources answer, then `complete`                     |
+| `GET /api/checks/:id/stream` | Server-sent events: `snapshot`, then `source` and `record` as sources answer, then `complete`                     |
 | `GET /api/health`            | Mode and which sources are configured                                                                             |
 | `GET /api/docs`              | Swagger UI; `GET /api/openapi.json` for the document                                                              |
 
@@ -97,8 +97,22 @@ The stack joins the existing reverse proxy's Docker network (`PROXY_NETWORK`) an
 ports. Point the chosen subdomain at it in the existing proxy: `/api` to `api:4000`, everything
 else to `web:3000`. If the proxy can only target one upstream, send everything to `web:3000`;
 Next forwards `/api` to the API itself. Do not add a second proxy, and keep proxy buffering off
-for `/api/checks/*/events` (the API sends `X-Accel-Buffering: no`).
+for `/api/checks/*/stream` (the API sends `X-Accel-Buffering: no`).
 
 For a local container run without the server's proxy:
 `docker compose -f docker-compose.yml -f docker-compose.local.yml up --build` (mock mode, its own
 Postgres on port 5433, web on 3000 and api on 4000).
+
+### Backups
+
+`deploy/backup.sh` dumps the `carcheck` database, keeps 14 days of dumps on the server and
+copies each one off the box with rsync. Copy `deploy/backup.env.example` to `deploy/backup.env`,
+set `PG_CONTAINER` (the existing Postgres container) or `DATABASE_URL`, and `BACKUP_REMOTE`, then
+add it to cron:
+
+```cron
+15 3 * * * /opt/car-check/deploy/backup.sh >> /var/log/carcheck-backup.log 2>&1
+```
+
+Restore with `gunzip -c carcheck-<stamp>.sql.gz | psql "$DATABASE_URL"`. Test a restore once
+after setting it up.

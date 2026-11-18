@@ -158,7 +158,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/checks/{id}/events": {
+    "/api/checks/{id}/stream": {
         parameters: {
             query?: never;
             header?: never;
@@ -419,7 +419,7 @@ export interface components {
             check: components["schemas"]["CheckInput"];
             links: {
                 self: string;
-                events: string;
+                stream: string;
             };
         };
         HealthInput: {
@@ -647,7 +647,7 @@ export interface components {
             check: components["schemas"]["Check"];
             links: {
                 self: string;
-                events: string;
+                stream: string;
             };
         };
         Health: {

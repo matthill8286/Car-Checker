@@ -121,7 +121,7 @@ describe('API on Postgres', () => {
       payload: { query, ...extra },
     });
     const id = created.json().check.id as string;
-    await app!.inject({ method: 'GET', url: `/api/checks/${id}/events` });
+    await app!.inject({ method: 'GET', url: `/api/checks/${id}/stream` });
     return CheckSchema.parse(
       (await app!.inject({ method: 'GET', url: `/api/checks/${id}` })).json(),
     );
@@ -168,5 +168,10 @@ describe('API on Postgres', () => {
     const dvla = again.sources.find((s) => s.source === 'dvla');
     expect(dvla).toMatchObject({ status: 'error', cached: false });
     expect(again.sources.find((s) => s.source === 'dvsa_mot')?.cached).toBe(true);
+
+    // Both failed DVLA fetches are in the fetch log, with the message shown to the user.
+    const failures = (await db.select().from(sourceResponses)).filter((r) => r.outcome === 'error');
+    expect(failures).toHaveLength(2);
+    expect(failures[0]).toMatchObject({ source: 'dvla', raw: { message: dvla?.message } });
   });
 });
