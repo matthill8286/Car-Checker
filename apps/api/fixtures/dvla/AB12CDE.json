@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "body": {
+    "registrationNumber": "AB12CDE",
+    "taxStatus": "Taxed",
+    "taxDueDate": "2027-04-01",
+    "motStatus": "Valid",
+    "motExpiryDate": "2027-04-17",
+    "make": "FORD",
+    "monthOfFirstRegistration": "2012-04",
+    "yearOfManufacture": 2012,
+    "engineCapacity": 1596,
+    "co2Emissions": 139,
+    "fuelType": "PETROL",
+    "markedForExport": false,
+    "colour": "BLUE",
+    "typeApproval": "M1",
+    "wheelplan": "2 AXLE RIGID BODY",
+    "revenueWeight": 1825,
+    "euroStatus": "EURO 5",
+    "dateOfLastV5CIssued": "2023-06-14"
+  }
+}

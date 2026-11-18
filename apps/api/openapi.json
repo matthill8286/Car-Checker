@@ -1,0 +1,2072 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Car Check API",
+    "version": "0.1.0",
+    "description": "Pre-purchase vehicle checks merged from DVLA, DVSA, RDW and NHTSA."
+  },
+  "components": {
+    "schemas": {
+      "CountryCodeInput": {
+        "type": "string",
+        "enum": [
+          "GB",
+          "NL"
+        ]
+      },
+      "QueryHintInput": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "GB",
+          "NL",
+          "VIN"
+        ]
+      },
+      "UkRegIdentifierInput": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "uk_reg"
+          },
+          "country": {
+            "type": "string",
+            "const": "GB"
+          },
+          "value": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "current",
+              "prefix",
+              "suffix",
+              "dateless"
+            ]
+          },
+          "issuePeriod": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "northernIreland": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "country",
+          "value",
+          "display",
+          "format",
+          "issuePeriod",
+          "northernIreland"
+        ]
+      },
+      "NlPlateIdentifierInput": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "nl_plate"
+          },
+          "country": {
+            "type": "string",
+            "const": "NL"
+          },
+          "value": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "sidecode": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "kind",
+          "country",
+          "value",
+          "display",
+          "sidecode"
+        ]
+      },
+      "VinIdentifierInput": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "vin"
+          },
+          "country": {
+            "type": "null"
+          },
+          "value": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "wmi": {
+            "type": "string"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "africa",
+                  "asia",
+                  "europe",
+                  "north_america",
+                  "oceania",
+                  "south_america"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checkDigitMatches": {
+            "type": "boolean"
+          },
+          "modelYearCandidates": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "country",
+          "value",
+          "display",
+          "wmi",
+          "region",
+          "checkDigitMatches",
+          "modelYearCandidates"
+        ]
+      },
+      "IdentifierInput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/UkRegIdentifierInput"
+          },
+          {
+            "$ref": "#/components/schemas/NlPlateIdentifierInput"
+          },
+          {
+            "$ref": "#/components/schemas/VinIdentifierInput"
+          }
+        ]
+      },
+      "SourceIdInput": {
+        "type": "string",
+        "enum": [
+          "dvla",
+          "dvsa_mot",
+          "rdw",
+          "nhtsa_vpic"
+        ]
+      },
+      "DefectTypeInput": {
+        "type": "string",
+        "enum": [
+          "advisory",
+          "minor",
+          "major",
+          "dangerous",
+          "fail",
+          "prs",
+          "non_specific",
+          "system_generated",
+          "user_entered"
+        ]
+      },
+      "DefectInput": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/DefectTypeInput"
+          },
+          "dangerous": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "text",
+          "type",
+          "dangerous"
+        ]
+      },
+      "OdometerInput": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "mi",
+              "km"
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ]
+      },
+      "MotTestInput": {
+        "type": "object",
+        "properties": {
+          "testNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completedAt": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed"
+            ]
+          },
+          "expiryDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "odometer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OdometerInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "odometerResult": {
+            "type": "string",
+            "enum": [
+              "read",
+              "unreadable",
+              "no_odometer"
+            ]
+          },
+          "defects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefectInput"
+            }
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceIdInput"
+          }
+        },
+        "required": [
+          "testNumber",
+          "completedAt",
+          "result",
+          "expiryDate",
+          "odometer",
+          "odometerResult",
+          "defects",
+          "source"
+        ]
+      },
+      "VehicleFactsInput": {
+        "type": "object",
+        "properties": {
+          "registration": {
+            "type": "string"
+          },
+          "vin": {
+            "type": "string"
+          },
+          "country": {
+            "$ref": "#/components/schemas/CountryCodeInput"
+          },
+          "make": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "bodyType": {
+            "type": "string"
+          },
+          "colour": {
+            "type": "string"
+          },
+          "fuelType": {
+            "type": "string"
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "cylinders": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "co2EmissionsGKm": {
+            "type": "number"
+          },
+          "euroStatus": {
+            "type": "string"
+          },
+          "massEmptyKg": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "yearOfManufacture": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "modelYear": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "firstRegistrationDate": {
+            "type": "string"
+          },
+          "lastKeeperChangeDate": {
+            "type": "string"
+          },
+          "plantCountry": {
+            "type": "string"
+          },
+          "taxStatus": {
+            "type": "string"
+          },
+          "taxDueDate": {
+            "type": "string"
+          },
+          "motStatus": {
+            "type": "string"
+          },
+          "motExpiryDate": {
+            "type": "string"
+          },
+          "markedForExport": {
+            "type": "boolean"
+          },
+          "outstandingRecall": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ]
+          },
+          "insured": {
+            "type": "boolean"
+          },
+          "listPriceEur": {
+            "type": "number"
+          }
+        }
+      },
+      "FactConflictInput": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/components/schemas/SourceIdInput"
+                },
+                "value": {}
+              },
+              "required": [
+                "source",
+                "value"
+              ]
+            }
+          }
+        },
+        "required": [
+          "field",
+          "values"
+        ]
+      },
+      "MileageAnomalyInput": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "decrease",
+              "unit_change"
+            ]
+          },
+          "from": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/OdometerInput"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ]
+          },
+          "to": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/OdometerInput"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "from",
+          "to",
+          "message"
+        ]
+      },
+      "MileageSummaryInput": {
+        "type": "object",
+        "properties": {
+          "readings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "odometer": {
+                  "$ref": "#/components/schemas/OdometerInput"
+                }
+              },
+              "required": [
+                "date",
+                "odometer"
+              ]
+            }
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "odometer": {
+                    "$ref": "#/components/schemas/OdometerInput"
+                  }
+                },
+                "required": [
+                  "date",
+                  "odometer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "averagePerYear": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mi",
+                  "km"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "anomalies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MileageAnomalyInput"
+            }
+          }
+        },
+        "required": [
+          "readings",
+          "latest",
+          "averagePerYear",
+          "unit",
+          "anomalies"
+        ]
+      },
+      "VehicleRecordInput": {
+        "type": "object",
+        "properties": {
+          "facts": {
+            "$ref": "#/components/schemas/VehicleFactsInput"
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SourceIdInput"
+            }
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FactConflictInput"
+            }
+          },
+          "motTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MotTestInput"
+            }
+          },
+          "mileage": {
+            "$ref": "#/components/schemas/MileageSummaryInput"
+          }
+        },
+        "required": [
+          "facts",
+          "provenance",
+          "conflicts",
+          "motTests",
+          "mileage"
+        ]
+      },
+      "CreateCheckBodyInput": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "hint": {
+            "default": "auto",
+            "$ref": "#/components/schemas/QueryHintInput"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "SourceRunStatusInput": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "ok",
+          "not_found",
+          "error",
+          "skipped"
+        ]
+      },
+      "SourceRunInput": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/SourceIdInput"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SourceRunStatusInput"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source",
+          "label",
+          "status",
+          "message",
+          "startedAt",
+          "finishedAt",
+          "durationMs",
+          "mock"
+        ]
+      },
+      "CheckStatusInput": {
+        "type": "string",
+        "enum": [
+          "running",
+          "complete",
+          "partial",
+          "failed"
+        ]
+      },
+      "CheckInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatusInput"
+          },
+          "identifier": {
+            "$ref": "#/components/schemas/IdentifierInput"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentifierInput"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceRunInput"
+            }
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VehicleRecordInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "status",
+          "identifier",
+          "alternatives",
+          "sources",
+          "record",
+          "createdAt",
+          "completedAt"
+        ]
+      },
+      "CheckEventInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "snapshot"
+              },
+              "check": {
+                "$ref": "#/components/schemas/CheckInput"
+              }
+            },
+            "required": [
+              "type",
+              "check"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "source"
+              },
+              "run": {
+                "$ref": "#/components/schemas/SourceRunInput"
+              }
+            },
+            "required": [
+              "type",
+              "run"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "record"
+              },
+              "record": {
+                "$ref": "#/components/schemas/VehicleRecordInput"
+              }
+            },
+            "required": [
+              "type",
+              "record"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "complete"
+              },
+              "check": {
+                "$ref": "#/components/schemas/CheckInput"
+              }
+            },
+            "required": [
+              "type",
+              "check"
+            ]
+          }
+        ]
+      },
+      "ApiErrorInput": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ]
+      },
+      "CreatedCheckInput": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/CheckInput"
+          },
+          "links": {
+            "type": "object",
+            "properties": {
+              "self": {
+                "type": "string"
+              },
+              "events": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "self",
+              "events"
+            ]
+          }
+        },
+        "required": [
+          "check",
+          "links"
+        ]
+      },
+      "HealthInput": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "mock",
+              "live"
+            ]
+          },
+          "version": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "$ref": "#/components/schemas/SourceIdInput"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "available": {
+                  "type": "boolean"
+                },
+                "message": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "available",
+                "message"
+              ]
+            }
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "version",
+          "sources"
+        ]
+      },
+      "CountryCode": {
+        "type": "string",
+        "enum": [
+          "GB",
+          "NL"
+        ]
+      },
+      "QueryHint": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "GB",
+          "NL",
+          "VIN"
+        ]
+      },
+      "UkRegIdentifier": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "uk_reg"
+          },
+          "country": {
+            "type": "string",
+            "const": "GB"
+          },
+          "value": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "current",
+              "prefix",
+              "suffix",
+              "dateless"
+            ]
+          },
+          "issuePeriod": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "northernIreland": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "country",
+          "value",
+          "display",
+          "format",
+          "issuePeriod",
+          "northernIreland"
+        ],
+        "additionalProperties": false
+      },
+      "NlPlateIdentifier": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "nl_plate"
+          },
+          "country": {
+            "type": "string",
+            "const": "NL"
+          },
+          "value": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "sidecode": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "kind",
+          "country",
+          "value",
+          "display",
+          "sidecode"
+        ],
+        "additionalProperties": false
+      },
+      "VinIdentifier": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "vin"
+          },
+          "country": {
+            "type": "null"
+          },
+          "value": {
+            "type": "string"
+          },
+          "display": {
+            "type": "string"
+          },
+          "wmi": {
+            "type": "string"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "africa",
+                  "asia",
+                  "europe",
+                  "north_america",
+                  "oceania",
+                  "south_america"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checkDigitMatches": {
+            "type": "boolean"
+          },
+          "modelYearCandidates": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "country",
+          "value",
+          "display",
+          "wmi",
+          "region",
+          "checkDigitMatches",
+          "modelYearCandidates"
+        ],
+        "additionalProperties": false
+      },
+      "Identifier": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/UkRegIdentifier"
+          },
+          {
+            "$ref": "#/components/schemas/NlPlateIdentifier"
+          },
+          {
+            "$ref": "#/components/schemas/VinIdentifier"
+          }
+        ]
+      },
+      "SourceId": {
+        "type": "string",
+        "enum": [
+          "dvla",
+          "dvsa_mot",
+          "rdw",
+          "nhtsa_vpic"
+        ]
+      },
+      "DefectType": {
+        "type": "string",
+        "enum": [
+          "advisory",
+          "minor",
+          "major",
+          "dangerous",
+          "fail",
+          "prs",
+          "non_specific",
+          "system_generated",
+          "user_entered"
+        ]
+      },
+      "Defect": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/DefectType"
+          },
+          "dangerous": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "text",
+          "type",
+          "dangerous"
+        ],
+        "additionalProperties": false
+      },
+      "Odometer": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "mi",
+              "km"
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "additionalProperties": false
+      },
+      "MotTest": {
+        "type": "object",
+        "properties": {
+          "testNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completedAt": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed"
+            ]
+          },
+          "expiryDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "odometer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Odometer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "odometerResult": {
+            "type": "string",
+            "enum": [
+              "read",
+              "unreadable",
+              "no_odometer"
+            ]
+          },
+          "defects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Defect"
+            }
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceId"
+          }
+        },
+        "required": [
+          "testNumber",
+          "completedAt",
+          "result",
+          "expiryDate",
+          "odometer",
+          "odometerResult",
+          "defects",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "VehicleFacts": {
+        "type": "object",
+        "properties": {
+          "registration": {
+            "type": "string"
+          },
+          "vin": {
+            "type": "string"
+          },
+          "country": {
+            "$ref": "#/components/schemas/CountryCode"
+          },
+          "make": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "bodyType": {
+            "type": "string"
+          },
+          "colour": {
+            "type": "string"
+          },
+          "fuelType": {
+            "type": "string"
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "cylinders": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "co2EmissionsGKm": {
+            "type": "number"
+          },
+          "euroStatus": {
+            "type": "string"
+          },
+          "massEmptyKg": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "yearOfManufacture": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "modelYear": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "firstRegistrationDate": {
+            "type": "string"
+          },
+          "lastKeeperChangeDate": {
+            "type": "string"
+          },
+          "plantCountry": {
+            "type": "string"
+          },
+          "taxStatus": {
+            "type": "string"
+          },
+          "taxDueDate": {
+            "type": "string"
+          },
+          "motStatus": {
+            "type": "string"
+          },
+          "motExpiryDate": {
+            "type": "string"
+          },
+          "markedForExport": {
+            "type": "boolean"
+          },
+          "outstandingRecall": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ]
+          },
+          "insured": {
+            "type": "boolean"
+          },
+          "listPriceEur": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FactConflict": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/components/schemas/SourceId"
+                },
+                "value": {}
+              },
+              "required": [
+                "source",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "field",
+          "values"
+        ],
+        "additionalProperties": false
+      },
+      "MileageAnomaly": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "decrease",
+              "unit_change"
+            ]
+          },
+          "from": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/Odometer"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ],
+            "additionalProperties": false
+          },
+          "to": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "odometer": {
+                "$ref": "#/components/schemas/Odometer"
+              }
+            },
+            "required": [
+              "date",
+              "odometer"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "from",
+          "to",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "MileageSummary": {
+        "type": "object",
+        "properties": {
+          "readings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "odometer": {
+                  "$ref": "#/components/schemas/Odometer"
+                }
+              },
+              "required": [
+                "date",
+                "odometer"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "odometer": {
+                    "$ref": "#/components/schemas/Odometer"
+                  }
+                },
+                "required": [
+                  "date",
+                  "odometer"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "averagePerYear": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mi",
+                  "km"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "anomalies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MileageAnomaly"
+            }
+          }
+        },
+        "required": [
+          "readings",
+          "latest",
+          "averagePerYear",
+          "unit",
+          "anomalies"
+        ],
+        "additionalProperties": false
+      },
+      "VehicleRecord": {
+        "type": "object",
+        "properties": {
+          "facts": {
+            "$ref": "#/components/schemas/VehicleFacts"
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SourceId"
+            }
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FactConflict"
+            }
+          },
+          "motTests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MotTest"
+            }
+          },
+          "mileage": {
+            "$ref": "#/components/schemas/MileageSummary"
+          }
+        },
+        "required": [
+          "facts",
+          "provenance",
+          "conflicts",
+          "motTests",
+          "mileage"
+        ],
+        "additionalProperties": false
+      },
+      "CreateCheckBody": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "hint": {
+            "default": "auto",
+            "$ref": "#/components/schemas/QueryHint"
+          }
+        },
+        "required": [
+          "query",
+          "hint"
+        ],
+        "additionalProperties": false
+      },
+      "SourceRunStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "ok",
+          "not_found",
+          "error",
+          "skipped"
+        ]
+      },
+      "SourceRun": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/SourceId"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SourceRunStatus"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source",
+          "label",
+          "status",
+          "message",
+          "startedAt",
+          "finishedAt",
+          "durationMs",
+          "mock"
+        ],
+        "additionalProperties": false
+      },
+      "CheckStatus": {
+        "type": "string",
+        "enum": [
+          "running",
+          "complete",
+          "partial",
+          "failed"
+        ]
+      },
+      "Check": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "identifier": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Identifier"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceRun"
+            }
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VehicleRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "status",
+          "identifier",
+          "alternatives",
+          "sources",
+          "record",
+          "createdAt",
+          "completedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CheckEvent": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "snapshot"
+              },
+              "check": {
+                "$ref": "#/components/schemas/Check"
+              }
+            },
+            "required": [
+              "type",
+              "check"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "source"
+              },
+              "run": {
+                "$ref": "#/components/schemas/SourceRun"
+              }
+            },
+            "required": [
+              "type",
+              "run"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "record"
+              },
+              "record": {
+                "$ref": "#/components/schemas/VehicleRecord"
+              }
+            },
+            "required": [
+              "type",
+              "record"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "complete"
+              },
+              "check": {
+                "$ref": "#/components/schemas/Check"
+              }
+            },
+            "required": [
+              "type",
+              "check"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "CreatedCheck": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/Check"
+          },
+          "links": {
+            "type": "object",
+            "properties": {
+              "self": {
+                "type": "string"
+              },
+              "events": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "self",
+              "events"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "check",
+          "links"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "mock",
+              "live"
+            ]
+          },
+          "version": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "$ref": "#/components/schemas/SourceId"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "available": {
+                  "type": "boolean"
+                },
+                "message": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "available",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "version",
+          "sources"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Liveness and source configuration",
+        "tags": [
+          "system"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/checks": {
+      "post": {
+        "summary": "Start a check for a UK registration, Dutch plate or VIN",
+        "tags": [
+          "checks"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckBodyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedCheck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/checks/{id}": {
+      "get": {
+        "summary": "Get a check and everything found so far",
+        "tags": [
+          "checks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Check"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/checks/{id}/events": {
+      "get": {
+        "summary": "Stream progress as server-sent events",
+        "tags": [
+          "checks"
+        ],
+        "description": "Sends `snapshot` first, then `source` and `record` events as each source answers, then `complete`, then closes. Each `data:` line is a JSON `CheckEvent`.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "text/event-stream of CheckEvent",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "text/event-stream of CheckEvent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "checks"
+    },
+    {
+      "name": "system"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "status": 500,
+  "body": {
+    "errors": [
+      {
+        "status": "500",
+        "code": "ENQ103",
+        "title": "Internal Server Error"
+      }
+    ]
+  }
+}

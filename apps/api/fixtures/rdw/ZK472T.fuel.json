@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "kenteken": "ZK472T",
+      "brandstof_volgnummer": "1",
+      "brandstof_omschrijving": "Benzine",
+      "co2_uitstoot_gecombineerd": "119",
+      "emissiecode_omschrijving": "6",
+      "uitlaatemissieniveau": "EURO 6 W"
+    }
+  ]
+}
