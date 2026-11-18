@@ -1,15 +1,8 @@
+import Link from 'next/link';
 import type { CheckSummary } from '@/api/client';
 import { formatDate } from './format';
 
-export function RecentChecks({
-  checks,
-  currentId,
-  onOpen,
-}: {
-  checks: CheckSummary[];
-  currentId: string | null;
-  onOpen: (id: string) => void;
-}) {
+export function RecentChecks({ checks }: { checks: CheckSummary[] }) {
   // One row per vehicle: the list is newest first, so keep the first check of each.
   const seen = new Set<string>();
   const unique = checks.filter((c) => {
@@ -25,16 +18,11 @@ export function RecentChecks({
       <ul>
         {unique.map((c) => (
           <li key={c.id}>
-            <button
-              type="button"
-              className="recent-item"
-              aria-current={c.id === currentId ? 'true' : undefined}
-              onClick={() => onOpen(c.id)}
-            >
+            <Link className="recent-item" href={`/check/${c.id}`}>
               <span className="recent-plate">{c.identifier.display}</span>
               <span>{c.title ?? 'No record found'}</span>
               <span className="muted">{formatDate(c.createdAt)}</span>
-            </button>
+            </Link>
           </li>
         ))}
       </ul>

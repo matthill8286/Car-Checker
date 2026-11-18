@@ -51,7 +51,7 @@ export function followCheck(
   onEvent: (event: CheckEvent) => void,
   onError: () => void,
 ): () => void {
-  const source = new EventSource(`${baseUrl}/api/checks/${encodeURIComponent(id)}/events`);
+  const source = new EventSource(`${baseUrl}/api/checks/${encodeURIComponent(id)}/stream`);
   let done = false;
   const listener = (message: MessageEvent<string>) => {
     const event = JSON.parse(message.data) as CheckEvent;

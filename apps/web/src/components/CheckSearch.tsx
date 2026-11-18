@@ -1,17 +1,9 @@
 'use client';
 
 import { detectIdentifier, type QueryHint } from '@carcheck/core';
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import {
-  followCheck,
-  getCheck,
-  listChecks,
-  startCheck,
-  type Check,
-  type CheckSummary,
-} from '@/api/client';
-import { applyEvent } from './checkState';
-import { CheckResult } from './CheckResult';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { listChecks, startCheck, type CheckSummary } from '@/api/client';
 import { RecentChecks } from './RecentChecks';
 
 const HINTS: Array<{ value: QueryHint; label: string }> = [
@@ -21,33 +13,24 @@ const HINTS: Array<{ value: QueryHint; label: string }> = [
   { value: 'VIN', label: 'VIN' },
 ];
 
-function hintFor(kind: 'uk_reg' | 'nl_plate' | 'vin'): QueryHint {
+export function hintFor(kind: 'uk_reg' | 'nl_plate' | 'vin'): QueryHint {
   return kind === 'uk_reg' ? 'GB' : kind === 'nl_plate' ? 'NL' : 'VIN';
 }
 
 const KIND_LABEL = { uk_reg: 'UK registration', nl_plate: 'Dutch plate', vin: 'VIN' } as const;
 
-export function CheckSearch() {
+/** The search form. On the home page it also lists recent checks; on a report it is compact. */
+export function CheckSearch({ compact = false }: { compact?: boolean }) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [hint, setHint] = useState<QueryHint>('auto');
-  const [check, setCheck] = useState<Check | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [recent, setRecent] = useState<CheckSummary[]>([]);
-  const stop = useRef<(() => void) | null>(null);
-
-  const refreshRecent = () => void listChecks().then(setRecent);
 
   useEffect(() => {
-    refreshRecent();
-    return () => stop.current?.();
-  }, []);
-
-  // Refresh the recent list whenever the shown check finishes.
-  const finished = check !== null && check.status !== 'running';
-  useEffect(() => {
-    if (finished) refreshRecent();
-  }, [finished, check?.id]);
+    if (!compact) void listChecks().then(setRecent);
+  }, [compact]);
 
   // Instant feedback from the shared validation; the API validates again on submit.
   const detected = useMemo(
@@ -55,57 +38,25 @@ export function CheckSearch() {
     [query, hint],
   );
 
-  function follow(id: string) {
-    stop.current = followCheck(
-      id,
-      (event) => setCheck((current) => applyEvent(current, event)),
-      () => setError('Lost the connection to the API while the check was running.'),
-    );
-  }
-
-  async function run(q: string, h: QueryHint, fresh = false) {
-    stop.current?.();
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!query.trim()) return;
     setSubmitting(true);
     setError(null);
-    const result = await startCheck(q, h, fresh);
-    setSubmitting(false);
+    const result = await startCheck(query, hint);
     if (!result.ok) {
-      setCheck(null);
+      setSubmitting(false);
       setError([result.error.message, ...(result.error.details ?? [])].join(' '));
       return;
     }
-    setCheck(result.created.check);
-    follow(result.created.check.id);
-  }
-
-  async function open(id: string) {
-    stop.current?.();
-    setError(null);
-    const found = await getCheck(id);
-    if (!found) {
-      setError('That check is no longer available.');
-      return;
-    }
-    setQuery(found.query);
-    setCheck(found);
-    if (found.status === 'running') follow(id);
-  }
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
-    void run(query, hint);
-  }
-
-  function searchAs(kind: 'uk_reg' | 'nl_plate' | 'vin') {
-    const h = hintFor(kind);
-    setHint(h);
-    void run(check?.query ?? query, h);
+    router.push(`/check/${result.created.check.id}`);
+    setSubmitting(false);
+    setQuery('');
   }
 
   return (
-    <section className="search">
-      <form onSubmit={onSubmit} className="search-form" aria-label="Vehicle search">
+    <section className={compact ? 'search search-compact' : 'search'}>
+      <form onSubmit={(e) => void onSubmit(e)} className="search-form" aria-label="Vehicle search">
         <label htmlFor="query" className="visually-hidden">
           Registration, plate or VIN
         </label>
@@ -150,14 +101,7 @@ export function CheckSearch() {
           {error}
         </p>
       )}
-      {check && (
-        <CheckResult
-          check={check}
-          onSearchAs={searchAs}
-          onRefresh={() => void run(check.query, hintFor(check.identifier.kind), true)}
-        />
-      )}
-      <RecentChecks checks={recent} currentId={check?.id ?? null} onOpen={(id) => void open(id)} />
+      {!compact && <RecentChecks checks={recent} />}
     </section>
   );
 }

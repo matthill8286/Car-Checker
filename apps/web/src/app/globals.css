@@ -665,3 +665,198 @@ button.link {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Report permalink */
+.masthead-compact h1 {
+  font-size: 1.25rem;
+}
+
+.masthead-compact h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.search-compact .search-hint {
+  min-height: 0;
+}
+
+/* Panels: header with the sources that feed them */
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+
+.panel-head h3 {
+  margin: 0;
+}
+
+.panel-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-badge {
+  font-size: 0.75rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+.badge-error {
+  color: var(--bad);
+  border-color: currentColor;
+}
+
+.badge-running,
+.badge-pending {
+  border-style: dashed;
+}
+
+.panel-note {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.panel-loading {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.panel-loading span {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--grid);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.panel-loading span:nth-child(2) {
+  width: 80%;
+}
+
+.panel-loading span:nth-child(3) {
+  width: 55%;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-loading span {
+    animation: none;
+  }
+}
+
+/* Defect table */
+.defect-table {
+  margin-top: 16px;
+}
+
+.defect-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: end;
+}
+
+.defect-filters label {
+  display: grid;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.defect-filters select,
+.defect-filters input {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.defect-search {
+  flex: 1 1 160px;
+}
+
+.defect-count {
+  font-size: 0.85rem;
+  margin: 8px 0 4px;
+}
+
+.defect-scroll {
+  overflow-x: auto;
+}
+
+.defect-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.defect-scroll th,
+.defect-scroll td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--grid);
+}
+
+.defect-scroll th {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sort {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sort:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.severity {
+  font-weight: 600;
+}
+
+.severity-dangerous {
+  color: var(--status-critical);
+}
+
+.severity-major {
+  color: var(--bad);
+}
+
+.severity-minor {
+  color: var(--warn);
+}
+
+.severity-advisory,
+.severity-other {
+  color: var(--muted);
+  font-weight: 400;
+}
