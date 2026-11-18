@@ -26,6 +26,12 @@ import { connect, type Database } from './db/client.js';
 import { FetchHttpClient, FixtureHttpClient, type HttpClient } from './http/client.js';
 import { checkRoutes } from './routes/checks.js';
 import { healthRoutes } from './routes/health.js';
+import { manualRoutes } from './routes/manual.js';
+import {
+  InMemoryManualReportStore,
+  PostgresManualReportStore,
+  type ManualReportStore,
+} from './manual/store.js';
 
 export const VERSION = '0.1.0';
 
@@ -36,6 +42,7 @@ export interface AppOverrides {
   db?: Database;
   store?: CheckStore;
   responses?: SourceResponseStore;
+  manualReports?: ManualReportStore;
   now?: () => Date;
   /** Simulated latency per fixture request, so the UI can show sources arriving one by one. */
   fixtureLatencyMs?: number;
@@ -80,9 +87,10 @@ export async function buildApp(
       info: {
         title: 'Car Check API',
         version: VERSION,
-        description: 'Pre-purchase vehicle checks merged from DVLA, DVSA, RDW and NHTSA.',
+        description:
+          'Pre-purchase vehicle checks merged from DVLA, DVSA, RDW and NHTSA, plus bought reports typed in by hand.',
       },
-      tags: [{ name: 'checks' }, { name: 'system' }],
+      tags: [{ name: 'checks' }, { name: 'manual' }, { name: 'system' }],
     },
     transform: jsonSchemaTransform,
     transformObject: jsonSchemaTransformObject,
@@ -96,13 +104,18 @@ export async function buildApp(
     (mock
       ? new FixtureHttpClient(config.FIXTURES_DIR, overrides.fixtureLatencyMs ?? 0)
       : new FetchHttpClient());
-  const adapters = overrides.adapters ?? createAdapters(config);
   let db = overrides.db;
   if (!db && config.DATABASE_URL) {
     const connection = await connect(config.DATABASE_URL, { migrate: config.DB_MIGRATE });
     db = connection.db;
     app.addHook('onClose', connection.close);
   }
+  const manualReports =
+    overrides.manualReports ??
+    (db
+      ? new PostgresManualReportStore(db, overrides.now)
+      : new InMemoryManualReportStore(overrides.now));
+  const adapters = overrides.adapters ?? createAdapters(config, manualReports);
   const storage = db ? ('postgres' as const) : ('memory' as const);
   const store = overrides.store ?? (db ? new PostgresCheckStore(db) : new InMemoryCheckStore());
   const responses =
@@ -123,6 +136,7 @@ export async function buildApp(
 
   await app.register(healthRoutes({ adapters, mock: http.mock, version: VERSION, storage }));
   await app.register(checkRoutes({ orchestrator, store, events }));
+  await app.register(manualRoutes({ store: manualReports }));
 
   return app;
 }

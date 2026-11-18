@@ -5,6 +5,7 @@ export const SOURCE_NAMES: Record<SourceId, string> = {
   dvsa_mot: 'DVSA',
   rdw: 'RDW',
   nhtsa_vpic: 'NHTSA',
+  manual: 'Bought report',
 };
 
 const dateFmt = new Intl.DateTimeFormat('en-GB', {
