@@ -1,6 +1,9 @@
 import type { SourceId } from '@carcheck/core';
 import type { Check } from '@/api/client';
+import { DefectHeatmap } from './DefectHeatmap';
 import { formatDate, formatDateTime, formatNumber, SOURCE_NAMES } from './format';
+import { MileageChart } from './MileageChart';
+import { MotTimeline } from './MotTimeline';
 
 type Record = NonNullable<Check['record']>;
 type Facts = Record['facts'];
@@ -123,6 +126,21 @@ function MileagePanel({ record }: { record: Record }) {
           ⚠ {a.message}
         </p>
       ))}
+      <MileageChart mileage={m} />
+    </section>
+  );
+}
+
+function DefectsPanel({ record }: { record: Record }) {
+  if (!record.motTests.some((t) => t.defects.length > 0)) return null;
+  return (
+    <section className="panel">
+      <h3>Defects by area</h3>
+      <p className="muted panel-intro">
+        Every advisory, minor, major and dangerous item from each year&apos;s tests, grouped by the
+        part of the car it concerns.
+      </p>
+      <DefectHeatmap tests={record.motTests} />
     </section>
   );
 }
@@ -132,6 +150,7 @@ function MotHistory({ record }: { record: Record }) {
   return (
     <section className="panel">
       <h3>MOT history ({record.motTests.length})</h3>
+      <MotTimeline tests={record.motTests} />
       <ol className="mot-list">
         {record.motTests.map((t) => (
           <li key={t.testNumber ?? t.completedAt} className={`mot mot-${t.result}`}>
@@ -264,6 +283,7 @@ export function CheckResult({
             )}
           </section>
           <MileagePanel record={record} />
+          <DefectsPanel record={record} />
           <MotHistory record={record} />
         </>
       )}

@@ -8,3 +8,4 @@ export * from './merge.js';
 export * from './schemas/identifier.js';
 export * from './schemas/vehicle.js';
 export * from './schemas/check.js';
+export * from './defects.js';
