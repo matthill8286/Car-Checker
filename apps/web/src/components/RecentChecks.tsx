@@ -10,12 +10,20 @@ export function RecentChecks({
   currentId: string | null;
   onOpen: (id: string) => void;
 }) {
-  if (checks.length === 0) return null;
+  // One row per vehicle: the list is newest first, so keep the first check of each.
+  const seen = new Set<string>();
+  const unique = checks.filter((c) => {
+    const key = `${c.identifier.kind}:${c.identifier.value}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (unique.length === 0) return null;
   return (
     <section className="recent" aria-label="Recent checks">
       <h3>Recent checks</h3>
       <ul>
-        {checks.map((c) => (
+        {unique.map((c) => (
           <li key={c.id}>
             <button
               type="button"
