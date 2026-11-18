@@ -22,6 +22,19 @@ export function formatDate(value: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? value : dateFmt.format(d);
 }
 
+const dateTimeFmt = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? value : dateTimeFmt.format(d);
+}
+
 export function formatNumber(value: number | null | undefined, unit?: string): string {
   if (value === null || value === undefined) return '—';
   return `${value.toLocaleString('en-GB')}${unit ? ` ${unit}` : ''}`;

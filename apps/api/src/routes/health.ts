@@ -8,6 +8,7 @@ export const HealthSchema = z
     status: z.literal('ok'),
     mode: z.enum(['mock', 'live']),
     version: z.string(),
+    storage: z.enum(['postgres', 'memory']),
     sources: z.array(
       z.object({
         id: SourceIdSchema,
@@ -23,6 +24,7 @@ export function healthRoutes(opts: {
   adapters: SourceAdapter[];
   mock: boolean;
   version: string;
+  storage: 'postgres' | 'memory';
 }): FastifyPluginAsyncZod {
   return async (app) => {
     app.get(
@@ -38,6 +40,7 @@ export function healthRoutes(opts: {
         status: 'ok' as const,
         mode: opts.mock ? ('mock' as const) : ('live' as const),
         version: opts.version,
+        storage: opts.storage,
         sources: opts.adapters.map((a) => {
           const message = a.unavailableReason(opts.mock);
           return { id: a.id, label: a.label, available: message === null, message };
