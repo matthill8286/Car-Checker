@@ -23,7 +23,7 @@ describe('cache in memory mode', () => {
       const id = (
         await app.inject({ method: 'POST', url: '/api/checks', payload: { query: 'ZK-472-T' } })
       ).json().check.id;
-      await app.inject({ method: 'GET', url: `/api/checks/${id}/events` });
+      await app.inject({ method: 'GET', url: `/api/checks/${id}/stream` });
       const check = (await app.inject({ method: 'GET', url: `/api/checks/${id}` })).json();
       expect(check.sources[0].cached).toBe(false);
     }

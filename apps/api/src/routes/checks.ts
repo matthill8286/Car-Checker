@@ -6,6 +6,7 @@ import {
   type Check,
   type CheckEvent,
 } from '@carcheck/core';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { CheckEvents } from '../checks/events.js';
@@ -17,7 +18,7 @@ const CheckParamsSchema = z.object({ id: z.uuid() });
 const CreatedCheckSchema = z
   .object({
     check: CheckSchema,
-    links: z.object({ self: z.string(), events: z.string() }),
+    links: z.object({ self: z.string(), stream: z.string() }),
   })
   .meta({ id: 'CreatedCheck' });
 
@@ -56,7 +57,7 @@ export function checkRoutes(deps: {
           return reply
             .code(202)
             .header('location', self)
-            .send({ check, links: { self, events: `${self}/events` } });
+            .send({ check, links: { self, stream: `${self}/stream` } });
         } catch (err) {
           if (err instanceof InvalidQueryError) {
             return reply
@@ -100,8 +101,64 @@ export function checkRoutes(deps: {
       },
     );
 
+    const stream = async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const { id } = request.params;
+
+      // Subscribe before reading the snapshot so nothing that happens in between is lost.
+      const buffered: CheckEvent[] = [];
+      let write: ((event: CheckEvent) => void) | null = null;
+      const unsubscribe = deps.events.subscribe(id, (event) => {
+        if (write) write(event);
+        else buffered.push(event);
+      });
+
+      const snapshot = await deps.store.get(id);
+      if (!snapshot) {
+        unsubscribe();
+        return reply.code(404).send({ error: 'not_found', message: 'No such check.' });
+      }
+
+      reply.hijack();
+      const res = reply.raw;
+      res.writeHead(200, {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-cache, no-transform',
+        connection: 'keep-alive',
+        // Stops nginx-style proxies from buffering the stream.
+        'x-accel-buffering': 'no',
+      });
+
+      let closed = false;
+      const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), HEARTBEAT_MS);
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        clearInterval(heartbeat);
+        unsubscribe();
+        res.end();
+      };
+      request.raw.on('close', close);
+
+      res.write(sse({ type: 'snapshot', check: snapshot }));
+      if (isFinished(snapshot)) {
+        res.write(sse({ type: 'complete', check: snapshot }));
+        close();
+        return;
+      }
+
+      write = (event) => {
+        if (closed) return;
+        res.write(sse(event));
+        if (event.type === 'complete') close();
+      };
+      for (const event of buffered.splice(0)) write(event);
+    };
+
     app.get(
-      '/api/checks/:id/events',
+      '/api/checks/:id/stream',
       {
         schema: {
           tags: ['checks'],
@@ -117,58 +174,14 @@ export function checkRoutes(deps: {
           },
         },
       },
-      async (request, reply) => {
-        const { id } = request.params;
+      stream,
+    );
 
-        // Subscribe before reading the snapshot so nothing that happens in between is lost.
-        const buffered: CheckEvent[] = [];
-        let write: ((event: CheckEvent) => void) | null = null;
-        const unsubscribe = deps.events.subscribe(id, (event) => {
-          if (write) write(event);
-          else buffered.push(event);
-        });
-
-        const snapshot = await deps.store.get(id);
-        if (!snapshot) {
-          unsubscribe();
-          return reply.code(404).send({ error: 'not_found', message: 'No such check.' });
-        }
-
-        reply.hijack();
-        const res = reply.raw;
-        res.writeHead(200, {
-          'content-type': 'text/event-stream; charset=utf-8',
-          'cache-control': 'no-cache, no-transform',
-          connection: 'keep-alive',
-          // Stops nginx-style proxies from buffering the stream.
-          'x-accel-buffering': 'no',
-        });
-
-        let closed = false;
-        const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), HEARTBEAT_MS);
-        const close = () => {
-          if (closed) return;
-          closed = true;
-          clearInterval(heartbeat);
-          unsubscribe();
-          res.end();
-        };
-        request.raw.on('close', close);
-
-        res.write(sse({ type: 'snapshot', check: snapshot }));
-        if (isFinished(snapshot)) {
-          res.write(sse({ type: 'complete', check: snapshot }));
-          close();
-          return;
-        }
-
-        write = (event) => {
-          if (closed) return;
-          res.write(sse(event));
-          if (event.type === 'complete') close();
-        };
-        for (const event of buffered.splice(0)) write(event);
-      },
+    // The path used before the build plan's name was adopted; kept so open tabs keep working.
+    app.get(
+      '/api/checks/:id/events',
+      { schema: { hide: true, params: CheckParamsSchema } },
+      stream,
     );
   };
 }

@@ -1,11 +1,16 @@
 import type { SourceId } from '@carcheck/core';
 import type { Check } from '@/api/client';
 import { DefectHeatmap } from './DefectHeatmap';
+import { DefectTable } from './DefectTable';
 import { formatDate, formatDateTime, formatNumber, SOURCE_NAMES } from './format';
 import { MileageChart } from './MileageChart';
 import { MotTimeline } from './MotTimeline';
+import { Panel, type SourceRun } from './Panel';
 
 type Record = NonNullable<Check['record']>;
+
+const ALL_SOURCES: readonly SourceId[] = ['dvla', 'dvsa_mot', 'rdw', 'nhtsa_vpic'];
+const MOT_SOURCES: readonly SourceId[] = ['dvsa_mot'];
 type Facts = Record['facts'];
 
 const STATUS_TEXT: { [K in Check['sources'][number]['status']]: string } = {
@@ -108,51 +113,73 @@ function StatusCards({ record }: { record: Record }) {
   );
 }
 
-function MileagePanel({ record }: { record: Record }) {
-  const m = record.mileage;
-  if (!m.latest) return null;
+function MileagePanel({ record, runs }: { record: Record | null; runs: SourceRun[] }) {
+  const m = record?.mileage;
   return (
-    <section className="panel">
-      <h3>Mileage</h3>
-      <p>
-        Last recorded {formatNumber(m.latest.odometer.value, m.latest.odometer.unit)} on{' '}
-        {formatDate(m.latest.date)}
-        {m.averagePerYear !== null && (
-          <> · about {formatNumber(m.averagePerYear, m.unit ?? '')} a year</>
-        )}
-      </p>
-      {m.anomalies.map((a) => (
-        <p key={`${a.from.date}-${a.to.date}`} className="warning">
-          ⚠ {a.message}
+    <Panel
+      title="Mileage"
+      runs={runs}
+      sources={MOT_SOURCES}
+      hasData={Boolean(m?.latest)}
+      empty="No mileage readings on record."
+    >
+      {m?.latest && (
+        <>
+          <p>
+            Last recorded {formatNumber(m.latest.odometer.value, m.latest.odometer.unit)} on{' '}
+            {formatDate(m.latest.date)}
+            {m.averagePerYear !== null && (
+              <> · about {formatNumber(m.averagePerYear, m.unit ?? '')} a year</>
+            )}
+          </p>
+          {m.anomalies.map((a) => (
+            <p key={`${a.from.date}-${a.to.date}`} className="warning">
+              ⚠ {a.message}
+            </p>
+          ))}
+          <MileageChart mileage={m} />
+        </>
+      )}
+    </Panel>
+  );
+}
+
+function DefectsPanel({ record, runs }: { record: Record | null; runs: SourceRun[] }) {
+  const tests = record?.motTests ?? [];
+  const count = tests.reduce((n, t) => n + t.defects.length, 0);
+  return (
+    <Panel
+      title={count > 0 ? `Defects (${count})` : 'Defects'}
+      runs={runs}
+      sources={MOT_SOURCES}
+      hasData={count > 0}
+      empty={tests.length > 0 ? 'No defects or advisories on any test.' : 'No MOT tests on record.'}
+      intro={
+        <p className="muted panel-intro">
+          Every advisory, minor, major and dangerous item from each year&apos;s tests, grouped by
+          the part of the car it concerns.
         </p>
-      ))}
-      <MileageChart mileage={m} />
-    </section>
+      }
+    >
+      <DefectHeatmap tests={tests} />
+      <DefectTable tests={tests} />
+    </Panel>
   );
 }
 
-function DefectsPanel({ record }: { record: Record }) {
-  if (!record.motTests.some((t) => t.defects.length > 0)) return null;
+function MotHistory({ record, runs }: { record: Record | null; runs: SourceRun[] }) {
+  const tests = record?.motTests ?? [];
   return (
-    <section className="panel">
-      <h3>Defects by area</h3>
-      <p className="muted panel-intro">
-        Every advisory, minor, major and dangerous item from each year&apos;s tests, grouped by the
-        part of the car it concerns.
-      </p>
-      <DefectHeatmap tests={record.motTests} />
-    </section>
-  );
-}
-
-function MotHistory({ record }: { record: Record }) {
-  if (record.motTests.length === 0) return null;
-  return (
-    <section className="panel">
-      <h3>MOT history ({record.motTests.length})</h3>
-      <MotTimeline tests={record.motTests} />
+    <Panel
+      title={tests.length > 0 ? `MOT history (${tests.length})` : 'MOT history'}
+      runs={runs}
+      sources={MOT_SOURCES}
+      hasData={tests.length > 0}
+      empty="No MOT tests on record. Cars under three years old have not needed one yet."
+    >
+      <MotTimeline tests={tests} />
       <ol className="mot-list">
-        {record.motTests.map((t) => (
+        {tests.map((t) => (
           <li key={t.testNumber ?? t.completedAt} className={`mot mot-${t.result}`}>
             <div className="mot-head">
               <span className="mot-result">{t.result === 'passed' ? 'Pass' : 'Fail'}</span>
@@ -180,7 +207,7 @@ function MotHistory({ record }: { record: Record }) {
           </li>
         ))}
       </ol>
-    </section>
+    </Panel>
   );
 }
 
@@ -251,45 +278,53 @@ export function CheckResult({
         ))}
       </ul>
 
-      {record && facts && (
-        <>
-          <StatusCards record={record} />
-          <section className="panel">
-            <h3>Vehicle</h3>
-            <dl className="facts">
-              {FACT_ROWS.filter((r) => facts[r.key] !== undefined).map((r) => (
-                <div key={r.key} className="fact">
-                  <dt>{r.label}</dt>
-                  <dd>
-                    {display(facts[r.key], r.format)} <SourceTag source={provenance[r.key]} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            {record.conflicts.length > 0 && (
-              <div className="conflicts">
-                <h4>Sources disagree</h4>
-                <ul>
-                  {record.conflicts.map((c) => (
-                    <li key={c.field}>
-                      {c.field}:{' '}
-                      {c.values
-                        .map((v) => `${SOURCE_NAMES[v.source]} says ${String(v.value)}`)
-                        .join(', ')}
-                    </li>
-                  ))}
-                </ul>
+      <Panel
+        title="Summary"
+        runs={check.sources}
+        sources={ALL_SOURCES}
+        hasData={Boolean(record)}
+        empty="No source had a record for this vehicle."
+      >
+        {record && <StatusCards record={record} />}
+      </Panel>
+      <Panel
+        title="Vehicle"
+        runs={check.sources}
+        sources={ALL_SOURCES}
+        hasData={Boolean(facts && FACT_ROWS.some((r) => facts[r.key] !== undefined))}
+        empty="No specification details found."
+      >
+        {facts && (
+          <dl className="facts">
+            {FACT_ROWS.filter((r) => facts[r.key] !== undefined).map((r) => (
+              <div key={r.key} className="fact">
+                <dt>{r.label}</dt>
+                <dd>
+                  {display(facts[r.key], r.format)} <SourceTag source={provenance[r.key]} />
+                </dd>
               </div>
-            )}
-          </section>
-          <MileagePanel record={record} />
-          <DefectsPanel record={record} />
-          <MotHistory record={record} />
-        </>
-      )}
-      {!record && check.status !== 'running' && (
-        <p className="muted">No source had a record for this vehicle.</p>
-      )}
+            ))}
+          </dl>
+        )}
+        {record && record.conflicts.length > 0 && (
+          <div className="conflicts">
+            <h4>Sources disagree</h4>
+            <ul>
+              {record.conflicts.map((c) => (
+                <li key={c.field}>
+                  {c.field}:{' '}
+                  {c.values
+                    .map((v) => `${SOURCE_NAMES[v.source]} says ${String(v.value)}`)
+                    .join(', ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Panel>
+      <MileagePanel record={record} runs={check.sources} />
+      <DefectsPanel record={record} runs={check.sources} />
+      <MotHistory record={record} runs={check.sources} />
     </article>
   );
 }
