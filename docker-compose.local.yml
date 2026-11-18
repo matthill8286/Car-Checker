@@ -5,7 +5,7 @@ services:
     environment:
       CARCHECK_MODE: mock
       MOCK_LATENCY_MS: 400
-      DATABASE_URL: postgres://carcheck:carcheck@db:5432/carcheck
+      DATABASE_URL: postgres://carcheck@db:5432/carcheck
     depends_on:
       db:
         condition: service_healthy
@@ -16,9 +16,10 @@ services:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: carcheck
-      POSTGRES_PASSWORD: carcheck
       POSTGRES_DB: carcheck
-    ports: ['5433:5432']
+      # Throwaway local database: no password, reachable only from this machine.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ['127.0.0.1:5433:5432']
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'carcheck']
       interval: 2s
