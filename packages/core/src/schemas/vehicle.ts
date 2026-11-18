@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { CountryCodeSchema } from './identifier.js';
 
 export const SourceIdSchema = z
-  .enum(['dvla', 'dvsa_mot', 'rdw', 'nhtsa_vpic'])
+  .enum(['dvla', 'dvsa_mot', 'rdw', 'nhtsa_vpic', 'manual'])
   .meta({ id: 'SourceId' });
 export type SourceId = z.infer<typeof SourceIdSchema>;
 

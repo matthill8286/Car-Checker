@@ -5,13 +5,20 @@ import { day } from './format.js';
 import { expectedMileage, findStalls } from './mileage.js';
 import { sourceMismatches } from './mismatch.js';
 import { findLapses, repeatAdvisories } from './mot.js';
+import { provenanceInsights } from './provenance.js';
 
 const SEVERITY_ORDER = { critical: 0, warning: 1, info: 2, good: 3 } as const;
 
 /** A lapse this short is usually a late booking rather than a car off the road. */
 export const SHORT_LAPSE_DAYS = 30;
 
-const SOURCE_LABEL = { dvla: 'DVLA', dvsa_mot: 'DVSA', rdw: 'RDW', nhtsa_vpic: 'NHTSA' } as const;
+const SOURCE_LABEL = {
+  dvla: 'DVLA',
+  dvsa_mot: 'DVSA',
+  rdw: 'RDW',
+  nhtsa_vpic: 'NHTSA',
+  manual: 'Bought report',
+} as const;
 const FIELD_LABEL = {
   colour: 'Colour',
   fuelType: 'Fuel',
@@ -158,6 +165,9 @@ export function buildInsights(record: Omit<VehicleRecord, 'insights'>): RecordIn
     });
   }
 
+  // Bought reports
+  items.push(...provenanceInsights(record.manualReports ?? []));
+
   // Status from the registers
   if (facts.outstandingRecall === 'yes') {
     items.push({
@@ -202,12 +212,23 @@ export function buildInsights(record: Omit<VehicleRecord, 'insights'>): RecordIn
     mot: { lapses, repeatAdvisories: repeats },
     mismatches,
     items,
-    verdict: verdictFrom(items, motTests.length > 0 || Object.keys(facts).length > 0),
+    verdict: verdictFrom(
+      items,
+      motTests.length > 0 || Object.keys(facts).length > 0 || Boolean(record.manualReports?.length),
+      Boolean(record.manualReports?.length),
+    ),
   };
 }
 
-/** The overall call. Free data cannot see finance, theft or write-offs, so "good" is guarded. */
-export function verdictFrom(items: readonly Insight[], hasData: boolean): Verdict {
+/**
+ * The overall call. Free data cannot see finance, theft or write-offs, so "good" says which
+ * records it rests on.
+ */
+export function verdictFrom(
+  items: readonly Insight[],
+  hasData: boolean,
+  hasBoughtReport = false,
+): Verdict {
   const reasons = items.filter((i) => i.severity === 'critical' || i.severity === 'warning');
   if (!hasData) {
     return { rating: 'unknown', headline: 'Not enough data to judge.', reasons: [] };
@@ -218,5 +239,11 @@ export function verdictFrom(items: readonly Insight[], hasData: boolean): Verdic
   if (reasons.length > 0) {
     return { rating: 'caution', headline: 'Check these before you buy.', reasons };
   }
-  return { rating: 'good', headline: 'Nothing in the free records stands out.', reasons: [] };
+  return {
+    rating: 'good',
+    headline: hasBoughtReport
+      ? 'Nothing in the free records or the bought report stands out.'
+      : 'Nothing in the free records stands out.',
+    reasons: [],
+  };
 }

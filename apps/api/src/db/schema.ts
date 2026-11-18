@@ -1,5 +1,6 @@
 import type {
   CheckStatus,
+  ManualReport,
   Identifier,
   SourceContribution,
   SourceId,
@@ -75,4 +76,24 @@ export const sourceResponses = pgTable(
   ],
 );
 
-export const schema = { checks, sourceResponses };
+/**
+ * Findings typed in from bought reports (HPI, carVertical and the like). The report itself is
+ * JSONB; registration and VIN are columns so a check can find its reports.
+ */
+export const manualReports = pgTable(
+  'manual_reports',
+  {
+    id: uuid('id').primaryKey(),
+    registration: text('registration'),
+    vin: text('vin'),
+    report: jsonb('report').$type<ManualReport>().notNull(),
+    createdAt: timestamptz('created_at').notNull(),
+    updatedAt: timestamptz('updated_at').notNull(),
+  },
+  (t) => [
+    index('manual_reports_registration_idx').on(t.registration),
+    index('manual_reports_vin_idx').on(t.vin),
+  ],
+);
+
+export const schema = { checks, sourceResponses, manualReports };

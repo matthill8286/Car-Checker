@@ -72,3 +72,23 @@ export function followCheck(
     source.close();
   };
 }
+
+export type ManualReport = components['schemas']['ManualReport'];
+export type ManualReportBody = components['schemas']['ManualReportBodyInput'];
+
+export type SaveResult = { ok: true; report: ManualReport } | { ok: false; error: ApiError };
+
+const unreachable: ApiError = { error: 'network', message: 'Could not reach the car check API.' };
+
+/** Creates a bought report, or replaces one when `id` is given. */
+export async function saveManualReport(body: ManualReportBody, id?: string): Promise<SaveResult> {
+  const { data, error } = id
+    ? await api.PUT('/api/manual-reports/{id}', { params: { path: { id } }, body })
+    : await api.POST('/api/manual-reports', { body });
+  return data ? { ok: true, report: data } : { ok: false, error: error ?? unreachable };
+}
+
+export async function deleteManualReport(id: string): Promise<boolean> {
+  const { response } = await api.DELETE('/api/manual-reports/{id}', { params: { path: { id } } });
+  return response.status === 204;
+}

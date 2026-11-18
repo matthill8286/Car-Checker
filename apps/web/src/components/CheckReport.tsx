@@ -52,6 +52,7 @@ export function CheckReport({ id }: { id: string }) {
             check={loaded.check}
             onSearchAs={(kind) => void rerun(loaded.check.query, kind, false)}
             onRefresh={() => void rerun(loaded.check.query, loaded.check.identifier.kind, true)}
+            onRecheck={() => void rerun(loaded.check.query, loaded.check.identifier.kind, false)}
           />
         </>
       )}
