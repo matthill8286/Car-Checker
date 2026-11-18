@@ -12,6 +12,18 @@
   --warn-bg: #fdf3dc;
   --bad: #b3261e;
   --bad-bg: #fbe7e5;
+  /* Chart roles (dataviz reference palette; ramps validated with validate_palette.js) */
+  --grid: #ecebe6;
+  --series-1: #2a78d6;
+  --status-good: #0ca30c;
+  --status-critical: #d03b3b;
+  --heat-0: #86b6ef;
+  --heat-1: #5598e7;
+  --heat-2: #2a78d6;
+  --heat-3: #1c5cab;
+  --heat-4: #104281;
+  --heat-ink-light: #0b0b0b;
+  --heat-ink-dark: #ffffff;
   --plate-gb: #f7d117;
   --plate-nl: #f2c200;
   --plate-text: #111;
@@ -34,6 +46,15 @@
     --warn-bg: #33290f;
     --bad: #f28b82;
     --bad-bg: #3a1a18;
+    --grid: #2a2c30;
+    --series-1: #3987e5;
+    --heat-0: #184f95;
+    --heat-1: #256abf;
+    --heat-2: #3987e5;
+    --heat-3: #6da7ec;
+    --heat-4: #9ec5f4;
+    --heat-ink-light: #ffffff;
+    --heat-ink-dark: #0b0b0b;
   }
 }
 
@@ -443,6 +464,197 @@ button.link {
 
 .attribution a {
   color: inherit;
+}
+
+.chart {
+  margin: 12px 0 0;
+  min-width: 0;
+}
+
+/* Grid and flex children default to min-width: auto, which lets wide charts stretch the page. */
+.result > *,
+.panel {
+  min-width: 0;
+}
+
+.chart-plot {
+  position: relative;
+  width: 100%;
+}
+
+.chart-tick,
+.chart-annotation {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.chart-annotation {
+  fill: var(--bad);
+  font-weight: 600;
+}
+
+.chart-mark {
+  cursor: pointer;
+  outline: none;
+}
+
+.chart-mark:focus-visible circle:last-of-type,
+.chart-mark:focus-visible rect {
+  stroke: var(--accent);
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  max-width: min(320px, 90%);
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  pointer-events: none;
+}
+
+.chart-tooltip.static {
+  position: static;
+}
+
+.chart-tooltip ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  color: var(--muted);
+}
+
+.tooltip-warning {
+  color: var(--bad);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.chart-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.table-view {
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.table-view summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.table-view table {
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.table-view td,
+.table-view th {
+  padding: 2px 16px 2px 0;
+  text-align: left;
+}
+
+.panel-intro {
+  margin: -4px 0 0;
+  font-size: 0.9rem;
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+}
+
+.heatmap {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 0.8rem;
+}
+
+.heatmap thead th {
+  font-weight: 400;
+  color: var(--muted);
+  min-width: 32px;
+}
+
+.heatmap tbody th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--muted);
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+.heatmap td {
+  padding: 0;
+  width: 32px;
+  height: 28px;
+}
+
+.heat-empty {
+  background: var(--grid);
+  border-radius: 4px;
+}
+
+.heat-cell {
+  width: 100%;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  font:
+    600 0.8rem/1 system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.heat-cell span {
+  margin-left: 1px;
+}
+
+.heat-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.heat-0 {
+  background: var(--heat-0);
+  color: var(--heat-ink-light);
+}
+.heat-1 {
+  background: var(--heat-1);
+  color: var(--heat-ink-light);
+}
+.heat-2 {
+  background: var(--heat-2);
+  color: #ffffff;
+}
+.heat-3 {
+  background: var(--heat-3);
+  color: var(--heat-ink-dark);
+}
+.heat-4 {
+  background: var(--heat-4);
+  color: var(--heat-ink-dark);
+}
+
+.heat-dangerous {
+  box-shadow: inset 0 0 0 2px var(--status-critical);
 }
 
 .visually-hidden {
