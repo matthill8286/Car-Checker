@@ -604,6 +604,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Background jobs, their schedules and last runs */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            scheduling: boolean;
+                            jobs: components["schemas"]["JobInfo"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{name}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run a job now and wait for it to finish */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: components["schemas"]["JobNameInput"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobRun"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1019,6 +1105,26 @@ export interface components {
                 self: string;
                 stream: string;
             };
+        };
+        /** @enum {string} */
+        JobNameInput: "source-keepalive" | "refresh-saved";
+        JobRunInput: {
+            ok: boolean;
+            summary: string;
+            details: {
+                item: string;
+                outcome: string;
+            }[];
+            startedAt: string;
+            finishedAt: string;
+            /** @enum {string} */
+            trigger: "schedule" | "manual";
+        };
+        JobInfoInput: {
+            name: components["schemas"]["JobNameInput"];
+            description: string;
+            schedule: string | null;
+            lastRun: components["schemas"]["JobRunInput"] | null;
         };
         HealthInput: {
             /** @constant */
@@ -1455,6 +1561,26 @@ export interface components {
                 self: string;
                 stream: string;
             };
+        };
+        /** @enum {string} */
+        JobName: "source-keepalive" | "refresh-saved";
+        JobRun: {
+            ok: boolean;
+            summary: string;
+            details: {
+                item: string;
+                outcome: string;
+            }[];
+            startedAt: string;
+            finishedAt: string;
+            /** @enum {string} */
+            trigger: "schedule" | "manual";
+        };
+        JobInfo: {
+            name: components["schemas"]["JobName"];
+            description: string;
+            schedule: string | null;
+            lastRun: components["schemas"]["JobRun"] | null;
         };
         Health: {
             /** @constant */
