@@ -27,6 +27,8 @@ import { FetchHttpClient, FixtureHttpClient, type HttpClient } from './http/clie
 import { checkRoutes } from './routes/checks.js';
 import { healthRoutes } from './routes/health.js';
 import { manualRoutes } from './routes/manual.js';
+import { vehicleRoutes } from './routes/vehicles.js';
+import { InMemoryVehicleStore, PostgresVehicleStore, type VehicleStore } from './garage/store.js';
 import {
   InMemoryManualReportStore,
   PostgresManualReportStore,
@@ -43,6 +45,7 @@ export interface AppOverrides {
   store?: CheckStore;
   responses?: SourceResponseStore;
   manualReports?: ManualReportStore;
+  vehicles?: VehicleStore;
   now?: () => Date;
   /** Simulated latency per fixture request, so the UI can show sources arriving one by one. */
   fixtureLatencyMs?: number;
@@ -90,7 +93,7 @@ export async function buildApp(
         description:
           'Pre-purchase vehicle checks merged from DVLA, DVSA, RDW and NHTSA, plus bought reports typed in by hand.',
       },
-      tags: [{ name: 'checks' }, { name: 'manual' }, { name: 'system' }],
+      tags: [{ name: 'checks' }, { name: 'manual' }, { name: 'garage' }, { name: 'system' }],
     },
     transform: jsonSchemaTransform,
     transformObject: jsonSchemaTransformObject,
@@ -121,6 +124,9 @@ export async function buildApp(
   const responses =
     overrides.responses ??
     (db ? new PostgresSourceResponseStore(db) : new InMemorySourceResponseStore());
+  const vehicles =
+    overrides.vehicles ??
+    (db ? new PostgresVehicleStore(db, overrides.now) : new InMemoryVehicleStore(overrides.now));
   const events = new CheckEvents();
   const orchestrator = new CheckOrchestrator({
     adapters,
@@ -131,12 +137,14 @@ export async function buildApp(
     events,
     log: app.log,
     timeoutMs: config.SOURCE_TIMEOUT_MS,
+    vehicles,
     now: overrides.now,
   });
 
   await app.register(healthRoutes({ adapters, mock: http.mock, version: VERSION, storage }));
   await app.register(checkRoutes({ orchestrator, store, events }));
   await app.register(manualRoutes({ store: manualReports }));
+  await app.register(vehicleRoutes({ store: vehicles }));
 
   return app;
 }

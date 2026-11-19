@@ -11,6 +11,7 @@ export * from './schemas/insights.js';
 export * from './schemas/manual.js';
 export * from './schemas/record.js';
 export * from './schemas/check.js';
+export * from './schemas/garage.js';
 export * from './insights/defects.js';
 export * from './insights/mot.js';
 export * from './insights/mismatch.js';
