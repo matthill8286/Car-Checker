@@ -223,6 +223,19 @@ function MotHistory({ record, runs }: { record: Record | null; runs: SourceRun[]
   );
 }
 
+/** Prints the report, with a document title that becomes the PDF's file name. */
+export function savePdf(check: Check, title: string | null) {
+  const previous = document.title;
+  const day = (check.completedAt ?? check.createdAt).slice(0, 10);
+  document.title = ['Car check', check.identifier.display, title, day].filter(Boolean).join(' - ');
+  const restore = () => {
+    document.title = previous;
+    window.removeEventListener('afterprint', restore);
+  };
+  window.addEventListener('afterprint', restore);
+  window.print();
+}
+
 export function CheckResult({
   check,
   onSearchAs,
@@ -252,11 +265,30 @@ export function CheckResult({
           <h2>{title || 'No vehicle details yet'}</h2>
           <p className="muted">{CHECK_STATUS[check.status]}</p>
         </div>
-        {anyCached && check.status !== 'running' && (
-          <button type="button" className="refresh" onClick={onRefresh}>
-            Check again
-          </button>
+        {check.status !== 'running' && (
+          <div className="result-actions no-print">
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => savePdf(check, title)}
+              title="Opens the print dialog; choose Save as PDF"
+            >
+              Save as PDF
+            </button>
+            {anyCached && (
+              <button type="button" className="refresh" onClick={onRefresh}>
+                Check again
+              </button>
+            )}
+          </div>
         )}
+        <p className="print-only print-meta">
+          Car Check report · checked {formatDateTime(check.completedAt ?? check.createdAt)} ·{' '}
+          {check.sources
+            .filter((s) => s.status === 'ok')
+            .map((s) => s.label)
+            .join(', ') || 'no sources answered'}
+        </p>
       </header>
 
       {check.alternatives.length > 0 && (

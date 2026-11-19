@@ -204,6 +204,8 @@ describe('OpenAPI', () => {
       '/api/checks/{id}',
       '/api/checks/{id}/stream',
       '/api/health',
+      '/api/jobs',
+      '/api/jobs/{name}/run',
       '/api/manual-reports',
       '/api/manual-reports/{id}',
       '/api/vehicles',
