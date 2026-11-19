@@ -92,3 +92,32 @@ export async function deleteManualReport(id: string): Promise<boolean> {
   const { response } = await api.DELETE('/api/manual-reports/{id}', { params: { path: { id } } });
   return response.status === 204;
 }
+
+export type VehicleSummary = components['schemas']['VehicleSummary'];
+export type SaveVehicleBody = components['schemas']['SaveVehicleBodyInput'];
+
+export async function getVehicle(id: string): Promise<VehicleSummary | null> {
+  const { data } = await api.GET('/api/vehicles/{id}', { params: { path: { id } } });
+  return data ?? null;
+}
+
+export async function listGarage(): Promise<VehicleSummary[]> {
+  const { data } = await api.GET('/api/vehicles');
+  return data?.vehicles ?? [];
+}
+
+export async function saveVehicle(
+  id: string,
+  body: SaveVehicleBody,
+): Promise<{ ok: true; vehicle: VehicleSummary } | { ok: false; error: ApiError }> {
+  const { data, error } = await api.POST('/api/vehicles/{id}/notes', {
+    params: { path: { id } },
+    body,
+  });
+  return data ? { ok: true, vehicle: data } : { ok: false, error: error ?? unreachable };
+}
+
+export async function unsaveVehicle(id: string): Promise<boolean> {
+  const { response } = await api.DELETE('/api/vehicles/{id}/saved', { params: { path: { id } } });
+  return response.status === 204;
+}

@@ -8,13 +8,17 @@ import type {
   VehicleRecord,
 } from '@carcheck/core';
 import {
+  bigint,
   bigserial,
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -37,6 +41,8 @@ export const checks = pgTable(
     title: text('title'),
     createdAt: timestamptz('created_at').notNull(),
     completedAt: timestamptz('completed_at'),
+    /** Plain uuid rather than a foreign key: vehicles reference checks, not the other way. */
+    vehicleId: uuid('vehicle_id'),
   },
   (t) => [
     index('checks_created_at_idx').on(t.createdAt),
@@ -96,4 +102,141 @@ export const manualReports = pgTable(
   ],
 );
 
-export const schema = { checks, sourceResponses, manualReports };
+/*
+ * Normalised tables from the build plan, rewritten from each vehicle's latest finished check.
+ * The check (JSONB) stays the source of truth; these make vehicles queryable for the garage,
+ * comparisons and jobs without opening every record.
+ */
+
+/** One row per vehicle, keyed by how it was looked up (UK reg, Dutch plate or VIN). */
+export const vehicles = pgTable(
+  'vehicles',
+  {
+    id: uuid('id').primaryKey(),
+    identifierKind: text('identifier_kind').$type<Identifier['kind']>().notNull(),
+    identifierValue: text('identifier_value').notNull(),
+    identifier: jsonb('identifier').$type<Identifier>().notNull(),
+    registration: text('registration'),
+    vin: text('vin'),
+    country: text('country'),
+    make: text('make'),
+    model: text('model'),
+    variant: text('variant'),
+    colour: text('colour'),
+    fuelType: text('fuel_type'),
+    engineCc: integer('engine_cc'),
+    firstRegistered: text('first_registered'),
+    verdict: text('verdict').$type<'avoid' | 'caution' | 'good' | 'unknown'>(),
+    concerns: integer('concerns').notNull().default(0),
+    latestCheckId: uuid('latest_check_id')
+      .notNull()
+      .references(() => checks.id),
+    checkedAt: timestamptz('checked_at').notNull(),
+    updatedAt: timestamptz('updated_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex('vehicles_identifier_idx').on(t.identifierKind, t.identifierValue),
+    index('vehicles_vin_idx').on(t.vin),
+    index('vehicles_registration_idx').on(t.registration),
+  ],
+);
+
+export const vehicleStatus = pgTable('vehicle_status', {
+  vehicleId: uuid('vehicle_id')
+    .primaryKey()
+    .references(() => vehicles.id, { onDelete: 'cascade' }),
+  taxStatus: text('tax_status'),
+  taxDue: text('tax_due'),
+  motStatus: text('mot_status'),
+  motExpiry: text('mot_expiry'),
+  markedForExport: boolean('marked_for_export'),
+  outstandingRecall: text('outstanding_recall'),
+});
+
+export const motTests = pgTable(
+  'mot_tests',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    vehicleId: uuid('vehicle_id')
+      .notNull()
+      .references(() => vehicles.id, { onDelete: 'cascade' }),
+    testNumber: text('test_number'),
+    completedAt: timestamptz('completed_at').notNull(),
+    result: text('result').$type<'passed' | 'failed'>().notNull(),
+    odometer: integer('odometer'),
+    odometerUnit: text('odometer_unit').$type<'mi' | 'km'>(),
+    odometerResult: text('odometer_result').notNull(),
+    expiry: text('expiry'),
+    source: text('source').$type<SourceId>().notNull(),
+  },
+  (t) => [index('mot_tests_vehicle_idx').on(t.vehicleId, t.completedAt)],
+);
+
+export const motDefects = pgTable(
+  'mot_defects',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    motTestId: bigint('mot_test_id', { mode: 'number' })
+      .notNull()
+      .references(() => motTests.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    dangerous: boolean('dangerous').notNull(),
+    text: text('text').notNull(),
+    category: text('category').notNull(),
+  },
+  (t) => [index('mot_defects_test_idx').on(t.motTestId)],
+);
+
+export const mileageReadings = pgTable(
+  'mileage_readings',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    vehicleId: uuid('vehicle_id')
+      .notNull()
+      .references(() => vehicles.id, { onDelete: 'cascade' }),
+    date: timestamptz('date').notNull(),
+    value: integer('value').notNull(),
+    unit: text('unit').$type<'mi' | 'km'>().notNull(),
+    source: text('source').$type<SourceId>().notNull(),
+  },
+  (t) => [index('mileage_readings_vehicle_idx').on(t.vehicleId, t.date)],
+);
+
+/** Per-field provenance: which source supplied each fact, and when it was fetched. */
+export const fieldSources = pgTable(
+  'field_sources',
+  {
+    vehicleId: uuid('vehicle_id')
+      .notNull()
+      .references(() => vehicles.id, { onDelete: 'cascade' }),
+    field: text('field').notNull(),
+    source: text('source').$type<SourceId>().notNull(),
+    fetchedAt: timestamptz('fetched_at'),
+  },
+  (t) => [primaryKey({ columns: [t.vehicleId, t.field] })],
+);
+
+/** The garage: vehicles the user is considering, with their own notes. */
+export const savedVehicles = pgTable('saved_vehicles', {
+  vehicleId: uuid('vehicle_id')
+    .primaryKey()
+    .references(() => vehicles.id, { onDelete: 'cascade' }),
+  notes: text('notes'),
+  askingPricePence: integer('asking_price_pence'),
+  listingUrl: text('listing_url'),
+  savedAt: timestamptz('saved_at').notNull(),
+  updatedAt: timestamptz('updated_at').notNull(),
+});
+
+export const schema = {
+  checks,
+  sourceResponses,
+  manualReports,
+  vehicles,
+  vehicleStatus,
+  motTests,
+  motDefects,
+  mileageReadings,
+  fieldSources,
+  savedVehicles,
+};

@@ -52,6 +52,7 @@ function toCheck(row: CheckRow): Check {
     record: row.record ?? null,
     createdAt: row.createdAt.toISOString(),
     completedAt: row.completedAt?.toISOString() ?? null,
+    vehicleId: row.vehicleId ?? null,
   };
 }
 
@@ -72,6 +73,7 @@ export class PostgresCheckStore implements CheckStore {
       title: summariseCheck(check).title,
       createdAt: new Date(check.createdAt),
       completedAt: check.completedAt ? new Date(check.completedAt) : null,
+      vehicleId: check.vehicleId ?? null,
     };
     await this.db
       .insert(checks)
@@ -84,6 +86,7 @@ export class PostgresCheckStore implements CheckStore {
           record: values.record,
           title: values.title,
           completedAt: values.completedAt,
+          vehicleId: values.vehicleId,
         },
       });
   }
