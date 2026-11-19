@@ -1572,6 +1572,12 @@
               "string",
               "null"
             ]
+          },
+          "vehicleId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -1709,6 +1715,234 @@
           "message"
         ]
       },
+      "SaveVehicleBodyInput": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "askingPricePence": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listingUrl": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SavedDetailsInput": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "askingPricePence": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listingUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "savedAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "notes",
+          "askingPricePence",
+          "listingUrl",
+          "savedAt",
+          "updatedAt"
+        ]
+      },
+      "VehicleSummaryInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "identifier": {
+            "$ref": "#/components/schemas/IdentifierInput"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registration": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colour": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fuelType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstRegistrationDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestCheckId": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "avoid",
+                  "caution",
+                  "good",
+                  "unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "concerns": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "taxStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "motStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "motExpiryDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestMileage": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "odometer": {
+                    "$ref": "#/components/schemas/OdometerInput"
+                  }
+                },
+                "required": [
+                  "date",
+                  "odometer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "saved": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SavedDetailsInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "identifier",
+          "title",
+          "registration",
+          "vin",
+          "colour",
+          "fuelType",
+          "firstRegistrationDate",
+          "latestCheckId",
+          "checkedAt",
+          "verdict",
+          "concerns",
+          "taxStatus",
+          "motStatus",
+          "motExpiryDate",
+          "latestMileage",
+          "saved"
+        ]
+      },
       "CreatedCheckInput": {
         "type": "object",
         "properties": {
@@ -1824,6 +2058,20 @@
         },
         "required": [
           "checks"
+        ]
+      },
+      "VehicleListInput": {
+        "type": "object",
+        "properties": {
+          "vehicles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VehicleSummaryInput"
+            }
+          }
+        },
+        "required": [
+          "vehicles"
         ]
       },
       "CountryCode": {
@@ -3450,6 +3698,12 @@
               "string",
               "null"
             ]
+          },
+          "vehicleId": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -3594,6 +3848,243 @@
         ],
         "additionalProperties": false
       },
+      "SaveVehicleBody": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "askingPricePence": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listingUrl": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "notes",
+          "askingPricePence",
+          "listingUrl"
+        ],
+        "additionalProperties": false
+      },
+      "SavedDetails": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "askingPricePence": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listingUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "savedAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "notes",
+          "askingPricePence",
+          "listingUrl",
+          "savedAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "VehicleSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "identifier": {
+            "$ref": "#/components/schemas/Identifier"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registration": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colour": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fuelType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstRegistrationDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestCheckId": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "avoid",
+                  "caution",
+                  "good",
+                  "unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "concerns": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "taxStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "motStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "motExpiryDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestMileage": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string"
+                  },
+                  "odometer": {
+                    "$ref": "#/components/schemas/Odometer"
+                  }
+                },
+                "required": [
+                  "date",
+                  "odometer"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "saved": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SavedDetails"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "identifier",
+          "title",
+          "registration",
+          "vin",
+          "colour",
+          "fuelType",
+          "firstRegistrationDate",
+          "latestCheckId",
+          "checkedAt",
+          "verdict",
+          "concerns",
+          "taxStatus",
+          "motStatus",
+          "motExpiryDate",
+          "latestMileage",
+          "saved"
+        ],
+        "additionalProperties": false
+      },
       "CreatedCheck": {
         "type": "object",
         "properties": {
@@ -3714,6 +4205,21 @@
         },
         "required": [
           "checks"
+        ],
+        "additionalProperties": false
+      },
+      "VehicleList": {
+        "type": "object",
+        "properties": {
+          "vehicles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VehicleSummary"
+            }
+          }
+        },
+        "required": [
+          "vehicles"
         ],
         "additionalProperties": false
       }
@@ -4130,6 +4636,177 @@
           }
         }
       }
+    },
+    "/api/vehicles": {
+      "get": {
+        "summary": "Saved vehicles, most recently edited first",
+        "tags": [
+          "garage"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehicles/{id}": {
+      "get": {
+        "summary": "A vehicle as of its latest check",
+        "tags": [
+          "garage"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehicles/{id}/notes": {
+      "post": {
+        "summary": "Save a vehicle to the garage with notes, asking price and listing link",
+        "tags": [
+          "garage"
+        ],
+        "description": "Saving again replaces the notes, price and link.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveVehicleBodyInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehicles/{id}/saved": {
+      "delete": {
+        "summary": "Remove a vehicle from the garage",
+        "tags": [
+          "garage"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -4138,6 +4815,9 @@
     },
     {
       "name": "manual"
+    },
+    {
+      "name": "garage"
     },
     {
       "name": "system"

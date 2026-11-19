@@ -2,6 +2,7 @@ import type { SourceId } from '@carcheck/core';
 import type { Check } from '@/api/client';
 import { BoughtReports } from './BoughtReports';
 import { DefectHeatmap } from './DefectHeatmap';
+import { GaragePanel } from './GaragePanel';
 import { DefectTable } from './DefectTable';
 import { InsightList, VerdictPanel } from './Insights';
 import { formatDate, formatDateTime, formatNumber, SOURCE_NAMES } from './format';
@@ -293,6 +294,7 @@ export function CheckResult({
         ))}
       </ul>
 
+      {check.vehicleId && <GaragePanel vehicleId={check.vehicleId} checkId={check.id} />}
       <VerdictPanel
         insights={record?.insights}
         reports={record?.manualReports ?? []}

@@ -411,6 +411,199 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Saved vehicles, most recently edited first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VehicleList"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A vehicle as of its latest check */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VehicleSummary"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save a vehicle to the garage with notes, asking price and listing link
+         * @description Saving again replaces the notes, price and link.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SaveVehicleBodyInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VehicleSummary"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vehicles/{id}/saved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a vehicle from the garage */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": null;
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -751,6 +944,7 @@ export interface components {
             record: components["schemas"]["VehicleRecordInput"] | null;
             createdAt: string;
             completedAt: string | null;
+            vehicleId?: string | null;
         };
         CheckSummaryInput: {
             id: string;
@@ -782,6 +976,43 @@ export interface components {
             message: string;
             details?: string[];
         };
+        SaveVehicleBodyInput: {
+            /** @default null */
+            notes: string | null;
+            /** @default null */
+            askingPricePence: number | null;
+            /** @default null */
+            listingUrl: string | null;
+        };
+        SavedDetailsInput: {
+            notes: string | null;
+            askingPricePence: number | null;
+            listingUrl: string | null;
+            savedAt: string;
+            updatedAt: string;
+        };
+        VehicleSummaryInput: {
+            id: string;
+            identifier: components["schemas"]["IdentifierInput"];
+            title: string | null;
+            registration: string | null;
+            vin: string | null;
+            colour: string | null;
+            fuelType: string | null;
+            firstRegistrationDate: string | null;
+            latestCheckId: string;
+            checkedAt: string;
+            verdict: ("avoid" | "caution" | "good" | "unknown") | null;
+            concerns: number;
+            taxStatus: string | null;
+            motStatus: string | null;
+            motExpiryDate: string | null;
+            latestMileage: {
+                date: string;
+                odometer: components["schemas"]["OdometerInput"];
+            } | null;
+            saved: components["schemas"]["SavedDetailsInput"] | null;
+        };
         CreatedCheckInput: {
             check: components["schemas"]["CheckInput"];
             links: {
@@ -809,6 +1040,9 @@ export interface components {
         };
         CheckListInput: {
             checks: components["schemas"]["CheckSummaryInput"][];
+        };
+        VehicleListInput: {
+            vehicles: components["schemas"]["VehicleSummaryInput"][];
         };
         /** @enum {string} */
         CountryCode: "GB" | "NL";
@@ -1146,6 +1380,7 @@ export interface components {
             record: components["schemas"]["VehicleRecord"] | null;
             createdAt: string;
             completedAt: string | null;
+            vehicleId?: string | null;
         };
         CheckSummary: {
             id: string;
@@ -1177,6 +1412,43 @@ export interface components {
             message: string;
             details?: string[];
         };
+        SaveVehicleBody: {
+            /** @default null */
+            notes: string | null;
+            /** @default null */
+            askingPricePence: number | null;
+            /** @default null */
+            listingUrl: string | null;
+        };
+        SavedDetails: {
+            notes: string | null;
+            askingPricePence: number | null;
+            listingUrl: string | null;
+            savedAt: string;
+            updatedAt: string;
+        };
+        VehicleSummary: {
+            id: string;
+            identifier: components["schemas"]["Identifier"];
+            title: string | null;
+            registration: string | null;
+            vin: string | null;
+            colour: string | null;
+            fuelType: string | null;
+            firstRegistrationDate: string | null;
+            latestCheckId: string;
+            checkedAt: string;
+            verdict: ("avoid" | "caution" | "good" | "unknown") | null;
+            concerns: number;
+            taxStatus: string | null;
+            motStatus: string | null;
+            motExpiryDate: string | null;
+            latestMileage: {
+                date: string;
+                odometer: components["schemas"]["Odometer"];
+            } | null;
+            saved: components["schemas"]["SavedDetails"] | null;
+        };
         CreatedCheck: {
             check: components["schemas"]["Check"];
             links: {
@@ -1204,6 +1476,9 @@ export interface components {
         };
         CheckList: {
             checks: components["schemas"]["CheckSummary"][];
+        };
+        VehicleList: {
+            vehicles: components["schemas"]["VehicleSummary"][];
         };
     };
     responses: never;

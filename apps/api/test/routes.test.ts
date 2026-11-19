@@ -206,6 +206,10 @@ describe('OpenAPI', () => {
       '/api/health',
       '/api/manual-reports',
       '/api/manual-reports/{id}',
+      '/api/vehicles',
+      '/api/vehicles/{id}',
+      '/api/vehicles/{id}/notes',
+      '/api/vehicles/{id}/saved',
     ]);
     expect(doc.components.schemas).toHaveProperty('Check');
     expect(doc.components.schemas).toHaveProperty('VehicleRecord');

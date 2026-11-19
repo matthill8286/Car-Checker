@@ -15,6 +15,7 @@ import { UpstreamError, type HttpClient } from '../http/client.js';
 import type { CachePolicy } from './cache.js';
 import type { CheckEvents } from './events.js';
 import type { SourceResponseStore } from './responses.js';
+import type { VehicleStore } from '../garage/store.js';
 import type { CheckStore } from './store.js';
 
 export class InvalidQueryError extends Error {
@@ -36,6 +37,8 @@ export interface OrchestratorDeps {
   events: CheckEvents;
   log: FastifyBaseLogger;
   timeoutMs: number;
+  /** Files finished checks under their vehicle (garage and normalised tables). */
+  vehicles?: VehicleStore;
   now?: () => Date;
 }
 
@@ -141,6 +144,7 @@ export class CheckOrchestrator {
 
     check.status = finalStatus(check.sources);
     check.completedAt = this.now().toISOString();
+    check.vehicleId = await this.fileVehicle(check);
     await this.deps.store.save(check);
     this.deps.events.publish(check.id, { type: 'complete', check: structuredClone(check) });
     return check;
@@ -204,6 +208,17 @@ export class CheckOrchestrator {
       this.deps.events.publish(check.id, { type: 'record', record: structuredClone(check.record) });
     }
     return discovered;
+  }
+
+  /** A failure to file the vehicle must not fail the check; it just has no garage link. */
+  private async fileVehicle(check: Check): Promise<string | null> {
+    if (!this.deps.vehicles || !check.record) return null;
+    try {
+      return await this.deps.vehicles.project(check);
+    } catch (err) {
+      this.deps.log.warn({ err, checkId: check.id }, 'could not file vehicle');
+      return null;
+    }
   }
 
   /** The latest stored answer from this source, if it is still within its TTL. */
