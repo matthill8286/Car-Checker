@@ -1,0 +1,75 @@
+# Car check on the netcup box, on its own: its own proxy, database and network. Nothing here is
+# shared with the other apps on the box. Another app's proxy owns 80/443, so this one serves 8443.
+#
+#   docker compose -f compose.yml up -d
+#
+# The deploy workflow copies this folder to ~/carcheck on the box, writes .env from the
+# CARCHECK_ENV secret and sets IMAGE_TAG to the commit it built.
+
+name: carcheck
+
+x-app: &app
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: '10m', max-file: '3' }
+
+services:
+  caddy:
+    <<: *app
+    image: ${REGISTRY:-ghcr.io/matthill8286}/carcheck-caddy:${IMAGE_TAG:-latest}
+    ports: ['8443:8443']
+    environment:
+      CARCHECK_DOMAIN: ${CARCHECK_DOMAIN:?Set CARCHECK_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL}
+      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN:?Set DUCKDNS_TOKEN}
+      CARCHECK_AUTH_USER: ${CARCHECK_AUTH_USER:?Set CARCHECK_AUTH_USER}
+      CARCHECK_AUTH_HASH: ${CARCHECK_AUTH_HASH:?Set CARCHECK_AUTH_HASH}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [web]
+
+  api:
+    <<: *app
+    image: ${REGISTRY:-ghcr.io/matthill8286}/carcheck-api:${IMAGE_TAG:-latest}
+    env_file: [.env]
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4000
+      # The password reaches node-postgres (and pg-boss) through PGPASSWORD, not the URL.
+      DATABASE_URL: postgres://carcheck@postgres:5432/carcheck
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    expose: ['4000']
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  web:
+    <<: *app
+    image: ${REGISTRY:-ghcr.io/matthill8286}/carcheck-web:${IMAGE_TAG:-latest}
+    expose: ['3000']
+    depends_on:
+      api: { condition: service_healthy }
+
+  postgres:
+    <<: *app
+    image: postgres:17-alpine
+    # POSTGRES_PASSWORD comes from .env.
+    env_file: [.env]
+    environment:
+      POSTGRES_USER: carcheck
+      POSTGRES_DB: carcheck
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U carcheck -d carcheck']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Only this stack's network.
+    expose: ['5432']
+
+volumes:
+  pgdata:
+  caddy-data:
+  caddy-config:
