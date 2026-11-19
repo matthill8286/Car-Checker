@@ -45,6 +45,12 @@ is reported as skipped rather than failing the check.
 | `GET /api/manual-reports?registration=&vin=` | Bought reports for a vehicle, newest first                                                                        |
 | `POST /api/manual-reports`                   | Record what a bought report found (finance, stolen, write-off, keepers, plate changes, provider and cost)         |
 | `PUT` / `DELETE /api/manual-reports/:id`     | Correct or remove a bought report                                                                                 |
+| `GET /api/vehicles`                          | Saved vehicles (the garage), most recently edited first                                                           |
+| `GET /api/vehicles/:id`                      | One vehicle with its latest check summary and saved notes                                                         |
+| `POST /api/vehicles/:id/notes`               | Save to the garage, or replace notes, asking price (pence) and listing link                                       |
+| `DELETE /api/vehicles/:id/saved`             | Remove from the garage (the vehicle and its checks stay)                                                          |
+| `GET /api/jobs`                              | Background jobs, their schedules and last runs                                                                    |
+| `POST /api/jobs/:name/run`                   | Run `source-keepalive` or `refresh-saved` now                                                                     |
 | `GET /api/docs`                              | Swagger UI; `GET /api/openapi.json` for the document                                                              |
 
 ## Storage and caching
@@ -55,6 +61,10 @@ With `DATABASE_URL` set, checks and every source answer are stored in Postgres (
 
 - `checks`: one row per check; its sources, record and identifiers as JSONB.
 - `source_responses`: every answer a source gave, with the raw upstream payload as JSONB.
+- `vehicles`, `vehicle_status`, `mot_tests`, `mot_defects`, `mileage_readings`, `field_sources`:
+  normalised tables, re-projected from each finished check so they mirror its latest record.
+- `saved_vehicles`: the garage (notes, asking price, listing link).
+- `manual_reports`: bought reports typed in by hand.
 
 A source's stored answer is reused while fresh: 24 hours for DVLA, DVSA and RDW, 30 days for
 NHTSA, 1 hour for "not found". Errors are never cached. `"fresh": true` (or "Check again" in the
@@ -127,3 +137,23 @@ carVertical and others). Buy one per car, then use "Record a bought report" on t
 The `manual` source adds every bought report saved for the registration or VIN to each check,
 so its findings sit in the same verdict as the free data. It reads the local database, so it is
 never cached and saving a report then re-running the check shows it straight away.
+
+## Garage, compare and PDF
+
+"Save to garage" on a report keeps the car with notes, an asking price and the listing link.
+The Garage page lists saved cars; tick two to compare them side by side. "Save as PDF" on a
+report opens the browser's print dialog with a print stylesheet (A4, light theme, no buttons or
+forms); choose "Save as PDF". The file name is the plate, car and date.
+
+## Background jobs
+
+With `DATABASE_URL` set, the API schedules two jobs with pg-boss (tables in the `pgboss` schema
+of the same database, so no Redis):
+
+- `source-keepalive`, weekly by default (`KEEPALIVE_CRON`): one lookup at DVLA and DVSA so an
+  idle key is never revoked (DVSA revokes after 90 days). It looks up `KEEPALIVE_REG`; "not
+  found" still counts as a use. Sources without keys are skipped.
+- `refresh-saved`, off by default (`REFRESH_CRON`): a new check for every saved vehicle.
+
+Run either now with `curl -X POST https://<host>/api/jobs/source-keepalive/run`; `GET /api/jobs`
+shows each one's last run. `JOBS_ENABLED=false` turns the schedules off.

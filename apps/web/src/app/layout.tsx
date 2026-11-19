@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-GB">
       <body>
-        <nav className="site-nav" aria-label="Main">
+        <nav className="site-nav no-print" aria-label="Main">
           <Link href="/" className="site-name">
             Car Check
           </Link>
