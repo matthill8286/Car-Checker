@@ -12,6 +12,8 @@ export const DEFAULT_CACHE_TTL_MS: Record<SourceId, number> = {
   dvsa_mot: 24 * HOUR,
   rdw: 24 * HOUR,
   nhtsa_vpic: 30 * 24 * HOUR,
+  // Bought reports live in our own database; the manual adapter is never cached.
+  manual: 0,
 };
 
 export const NOT_FOUND_TTL_MS = HOUR;

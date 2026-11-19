@@ -1,4 +1,5 @@
-import type { Check } from '@/api/client';
+import type { Check, ManualReport } from '@/api/client';
+import { formatDate } from './format';
 import { Panel, type SourceRun } from './Panel';
 
 type Insights = NonNullable<NonNullable<Check['record']>['insights']>;
@@ -52,18 +53,21 @@ const RATING: { [K in Insights['verdict']['rating']]: { label: string; tone: str
 /** The overall call with the reasons behind it, first thing on the report. */
 export function VerdictPanel({
   insights,
+  reports,
   runs,
 }: {
   insights: Insights | undefined;
+  reports: readonly ManualReport[];
   runs: readonly SourceRun[];
 }) {
+  const latest = reports[0];
   const v = insights?.verdict;
   const r = v ? RATING[v.rating] : null;
   return (
     <Panel
       title="Verdict"
       runs={runs}
-      sources={['dvla', 'dvsa_mot', 'rdw', 'nhtsa_vpic']}
+      sources={['dvla', 'dvsa_mot', 'rdw', 'nhtsa_vpic', 'manual']}
       hasData={Boolean(v)}
       empty="No source had enough to judge this vehicle."
     >
@@ -78,8 +82,9 @@ export function VerdictPanel({
           <p className="verdict-headline">{v.headline}</p>
           {v.reasons.length > 0 && <InsightList items={v.reasons} areas={AREAS} />}
           <p className="muted verdict-note">
-            Based on free official records only. Finance, theft and write-off history need a paid
-            check.
+            {latest
+              ? `Free official records plus ${reports.length === 1 ? 'a bought report' : `${reports.length} bought reports`} (latest ${latest.provider}, ${formatDate(latest.purchasedOn)}).`
+              : 'Based on free official records only. Finance, theft and write-off history need a paid check: record one under Bought reports.'}
           </p>
         </div>
       )}
@@ -87,4 +92,11 @@ export function VerdictPanel({
   );
 }
 
-const AREAS: ReadonlyArray<Insight['area']> = ['mileage', 'mot', 'defects', 'sources', 'status'];
+const AREAS: ReadonlyArray<Insight['area']> = [
+  'provenance',
+  'mileage',
+  'mot',
+  'defects',
+  'sources',
+  'status',
+];

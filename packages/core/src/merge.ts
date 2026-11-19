@@ -1,5 +1,6 @@
 import { summariseMileage } from './insights/mileage.js';
 import type { FactConflict, FactKey, MotTest, SourceId, VehicleFacts } from './schemas/vehicle.js';
+import type { ManualReport } from './schemas/manual.js';
 import type { VehicleRecord } from './schemas/record.js';
 import { buildInsights } from './insights/verdict.js';
 
@@ -7,6 +8,8 @@ export interface SourceContribution {
   source: SourceId;
   facts: VehicleFacts;
   motTests?: MotTest[];
+  /** Bought reports typed in by hand; only the manual source has these. */
+  manualReports?: ManualReport[];
 }
 
 /** Default trust order: official registers first, then test records, then VIN decoders. */
@@ -15,6 +18,7 @@ export const DEFAULT_SOURCE_PRIORITY: readonly SourceId[] = [
   'rdw',
   'dvsa_mot',
   'nhtsa_vpic',
+  'manual',
 ];
 
 /** Per-field overrides where a later source in the default order knows better. */
@@ -103,8 +107,16 @@ export function mergeContributions(contributions: readonly SourceContribution[])
   }
   motTests.sort((a, b) => b.completedAt.localeCompare(a.completedAt));
 
+  const manualReports = contributions
+    .flatMap((c) => c.manualReports ?? [])
+    .sort(
+      (a, b) =>
+        b.purchasedOn.localeCompare(a.purchasedOn) || b.createdAt.localeCompare(a.createdAt),
+    );
+
   const merged = facts as VehicleFacts;
   const record = {
+    ...(manualReports.length > 0 ? { manualReports } : {}),
     facts: merged,
     provenance,
     conflicts,

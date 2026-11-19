@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RecordInsightsSchema } from './insights.js';
+import { ManualReportSchema } from './manual.js';
 import {
   FactConflictSchema,
   MileageSummarySchema,
@@ -16,6 +17,8 @@ export const VehicleRecordSchema = z
     conflicts: z.array(FactConflictSchema),
     motTests: z.array(MotTestSchema),
     mileage: MileageSummarySchema,
+    /** Reports bought and typed in, newest first. Absent when none were found. */
+    manualReports: z.array(ManualReportSchema).optional(),
     /** Rule findings and the overall verdict. Missing on checks saved before insights existed. */
     insights: RecordInsightsSchema.optional(),
   })

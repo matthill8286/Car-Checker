@@ -26,4 +26,8 @@ export interface SourceAdapter {
   /** Null when the adapter can run; otherwise why not, in words fit to show the user. */
   unavailableReason(mock: boolean): string | null;
   lookup(identifier: Identifier, ctx: AdapterContext): Promise<AdapterOutcome>;
+  /** False for local sources: skip the response cache and the fetch log. Default true. */
+  readonly cacheable?: boolean;
+  /** Wording for "nothing found", when the default would mislead. */
+  notFoundMessage?(identifier: Identifier): string;
 }

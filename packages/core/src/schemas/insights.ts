@@ -16,7 +16,7 @@ export const InsightSchema = z
   .object({
     /** Stable rule id, such as `mileage.rollback`; several insights can share one. */
     rule: z.string(),
-    area: z.enum(['mileage', 'mot', 'defects', 'sources', 'status']),
+    area: z.enum(['mileage', 'mot', 'defects', 'sources', 'status', 'provenance']),
     severity: InsightSeveritySchema,
     title: z.string(),
     detail: z.string().nullable(),

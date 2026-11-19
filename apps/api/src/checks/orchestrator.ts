@@ -101,7 +101,8 @@ export class CheckOrchestrator {
         startedAt: null,
         finishedAt: null,
         durationMs: null,
-        mock: this.deps.http.mock,
+        // Local sources answer from our own data, never from fixtures.
+        mock: adapter.cacheable === false ? false : this.deps.http.mock,
         cached: false,
         fetchedAt: null,
       });
@@ -162,7 +163,8 @@ export class CheckOrchestrator {
     let discovered: Identifier[] = [];
     let asked = false;
     try {
-      const cached = fresh ? null : await this.fromCache(adapter, identifier);
+      const cacheable = adapter.cacheable !== false;
+      const cached = fresh || !cacheable ? null : await this.fromCache(adapter, identifier);
       let outcome: AdapterOutcome;
       if (cached) {
         outcome = cached.outcome;
@@ -176,7 +178,7 @@ export class CheckOrchestrator {
           now: this.now,
         });
         run.fetchedAt = this.now().toISOString();
-        await this.remember(check, adapter, identifier, outcome);
+        if (cacheable) await this.remember(check, adapter, identifier, outcome);
       }
       if (outcome.status === 'ok') {
         run.status = 'ok';
@@ -185,12 +187,13 @@ export class CheckOrchestrator {
         check.record = mergeContributions(contributions);
       } else {
         run.status = 'not_found';
-        run.message = `No record for ${identifier.display}.`;
+        run.message =
+          adapter.notFoundMessage?.(identifier) ?? `No record for ${identifier.display}.`;
       }
     } catch (err) {
       run.status = 'error';
       run.message = describeError(err, adapter.label);
-      if (asked)
+      if (asked && adapter.cacheable !== false)
         await this.remember(check, adapter, identifier, { status: 'error', message: run.message });
       this.deps.log.warn({ err, source: adapter.id, checkId: check.id }, 'source failed');
     }
@@ -285,8 +288,12 @@ function describeError(err: unknown, label: string): string {
   return `${label} could not be reached.`;
 }
 
+/**
+ * Complete, partial or failed, judged on the outside sources. Bought reports are always there
+ * to read, so they cannot rescue a check where no outside source could run.
+ */
 export function finalStatus(runs: readonly SourceRun[]): CheckStatus {
-  const ran = runs.filter((r) => r.status !== 'skipped');
+  const ran = runs.filter((r) => r.status !== 'skipped' && r.source !== 'manual');
   const errors = ran.filter((r) => r.status === 'error').length;
   if (ran.length === 0) return 'failed';
   if (errors === 0) return 'complete';

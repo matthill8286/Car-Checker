@@ -3,7 +3,7 @@
   "info": {
     "title": "Car Check API",
     "version": "0.1.0",
-    "description": "Pre-purchase vehicle checks merged from DVLA, DVSA, RDW and NHTSA."
+    "description": "Pre-purchase vehicle checks merged from DVLA, DVSA, RDW and NHTSA, plus bought reports typed in by hand."
   },
   "components": {
     "schemas": {
@@ -195,7 +195,8 @@
           "dvla",
           "dvsa_mot",
           "rdw",
-          "nhtsa_vpic"
+          "nhtsa_vpic",
+          "manual"
         ]
       },
       "DefectTypeInput": {
@@ -619,7 +620,8 @@
               "mot",
               "defects",
               "sources",
-              "status"
+              "status",
+              "provenance"
             ]
           },
           "severity": {
@@ -933,6 +935,444 @@
           "verdict"
         ]
       },
+      "FlagStatusInput": {
+        "type": "string",
+        "enum": [
+          "clear",
+          "recorded",
+          "not_checked"
+        ]
+      },
+      "WriteOffCategoryInput": {
+        "type": "string",
+        "enum": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "S",
+          "N"
+        ]
+      },
+      "PlateChangeInput": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "date": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "ManualReportBodyInput": {
+        "type": "object",
+        "properties": {
+          "registration": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vin": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 17
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "purchasedOn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "costPence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "reference": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finance": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatusInput"
+              },
+              "detail": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "stolen": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatusInput"
+              },
+              "detail": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "writeOff": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatusInput"
+              },
+              "category": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WriteOffCategoryInput"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "date": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "scrapped": {
+            "default": "not_checked",
+            "$ref": "#/components/schemas/FlagStatusInput"
+          },
+          "imported": {
+            "default": "not_checked",
+            "$ref": "#/components/schemas/FlagStatusInput"
+          },
+          "exported": {
+            "default": "not_checked",
+            "$ref": "#/components/schemas/FlagStatusInput"
+          },
+          "previousKeepers": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keeperChanges": {
+            "default": [],
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          "plateChanges": {
+            "default": [],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlateChangeInput"
+            }
+          },
+          "notes": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "purchasedOn",
+          "costPence",
+          "finance",
+          "stolen",
+          "writeOff"
+        ]
+      },
+      "ManualReportInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "registration": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "purchasedOn": {
+            "type": "string"
+          },
+          "costPence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finance": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatusInput"
+              },
+              "detail": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "detail"
+            ]
+          },
+          "stolen": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatusInput"
+              },
+              "detail": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "detail"
+            ]
+          },
+          "writeOff": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatusInput"
+              },
+              "category": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WriteOffCategoryInput"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "category",
+              "date"
+            ]
+          },
+          "scrapped": {
+            "$ref": "#/components/schemas/FlagStatusInput"
+          },
+          "imported": {
+            "$ref": "#/components/schemas/FlagStatusInput"
+          },
+          "exported": {
+            "$ref": "#/components/schemas/FlagStatusInput"
+          },
+          "previousKeepers": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keeperChanges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "plateChanges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "from",
+                "to",
+                "date"
+              ]
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "registration",
+          "vin",
+          "provider",
+          "purchasedOn",
+          "costPence",
+          "reference",
+          "finance",
+          "stolen",
+          "writeOff",
+          "scrapped",
+          "imported",
+          "exported",
+          "previousKeepers",
+          "keeperChanges",
+          "plateChanges",
+          "notes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "VehicleRecordInput": {
         "type": "object",
         "properties": {
@@ -959,6 +1399,12 @@
           },
           "mileage": {
             "$ref": "#/components/schemas/MileageSummaryInput"
+          },
+          "manualReports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualReportInput"
+            }
           },
           "insights": {
             "$ref": "#/components/schemas/RecordInsightsInput"
@@ -1352,6 +1798,20 @@
           "sources"
         ]
       },
+      "ManualReportListInput": {
+        "type": "object",
+        "properties": {
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualReportInput"
+            }
+          }
+        },
+        "required": [
+          "reports"
+        ]
+      },
       "CheckListInput": {
         "type": "object",
         "properties": {
@@ -1558,7 +2018,8 @@
           "dvla",
           "dvsa_mot",
           "rdw",
-          "nhtsa_vpic"
+          "nhtsa_vpic",
+          "manual"
         ]
       },
       "DefectType": {
@@ -1994,7 +2455,8 @@
               "mot",
               "defects",
               "sources",
-              "status"
+              "status",
+              "provenance"
             ]
           },
           "severity": {
@@ -2321,6 +2783,469 @@
         ],
         "additionalProperties": false
       },
+      "FlagStatus": {
+        "type": "string",
+        "enum": [
+          "clear",
+          "recorded",
+          "not_checked"
+        ]
+      },
+      "WriteOffCategory": {
+        "type": "string",
+        "enum": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "S",
+          "N"
+        ]
+      },
+      "PlateChange": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "date": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "date"
+        ],
+        "additionalProperties": false
+      },
+      "ManualReportBody": {
+        "type": "object",
+        "properties": {
+          "registration": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vin": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 17
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "purchasedOn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "costPence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "reference": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finance": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatus"
+              },
+              "detail": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "detail"
+            ],
+            "additionalProperties": false
+          },
+          "stolen": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatus"
+              },
+              "detail": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "detail"
+            ],
+            "additionalProperties": false
+          },
+          "writeOff": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatus"
+              },
+              "category": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WriteOffCategory"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "date": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "category",
+              "date"
+            ],
+            "additionalProperties": false
+          },
+          "scrapped": {
+            "default": "not_checked",
+            "$ref": "#/components/schemas/FlagStatus"
+          },
+          "imported": {
+            "default": "not_checked",
+            "$ref": "#/components/schemas/FlagStatus"
+          },
+          "exported": {
+            "default": "not_checked",
+            "$ref": "#/components/schemas/FlagStatus"
+          },
+          "previousKeepers": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keeperChanges": {
+            "default": [],
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          "plateChanges": {
+            "default": [],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlateChange"
+            }
+          },
+          "notes": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "registration",
+          "vin",
+          "provider",
+          "purchasedOn",
+          "costPence",
+          "reference",
+          "finance",
+          "stolen",
+          "writeOff",
+          "scrapped",
+          "imported",
+          "exported",
+          "previousKeepers",
+          "keeperChanges",
+          "plateChanges",
+          "notes"
+        ],
+        "additionalProperties": false
+      },
+      "ManualReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "registration": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "purchasedOn": {
+            "type": "string"
+          },
+          "costPence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "reference": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finance": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatus"
+              },
+              "detail": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "detail"
+            ],
+            "additionalProperties": false
+          },
+          "stolen": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatus"
+              },
+              "detail": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "detail"
+            ],
+            "additionalProperties": false
+          },
+          "writeOff": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/FlagStatus"
+              },
+              "category": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/WriteOffCategory"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "category",
+              "date"
+            ],
+            "additionalProperties": false
+          },
+          "scrapped": {
+            "$ref": "#/components/schemas/FlagStatus"
+          },
+          "imported": {
+            "$ref": "#/components/schemas/FlagStatus"
+          },
+          "exported": {
+            "$ref": "#/components/schemas/FlagStatus"
+          },
+          "previousKeepers": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keeperChanges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "plateChanges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "from",
+                "to",
+                "date"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "registration",
+          "vin",
+          "provider",
+          "purchasedOn",
+          "costPence",
+          "reference",
+          "finance",
+          "stolen",
+          "writeOff",
+          "scrapped",
+          "imported",
+          "exported",
+          "previousKeepers",
+          "keeperChanges",
+          "plateChanges",
+          "notes",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
       "VehicleRecord": {
         "type": "object",
         "properties": {
@@ -2347,6 +3272,12 @@
           },
           "mileage": {
             "$ref": "#/components/schemas/MileageSummary"
+          },
+          "manualReports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualReport"
+            }
           },
           "insights": {
             "$ref": "#/components/schemas/RecordInsights"
@@ -2756,6 +3687,21 @@
         ],
         "additionalProperties": false
       },
+      "ManualReportList": {
+        "type": "object",
+        "properties": {
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualReport"
+            }
+          }
+        },
+        "required": [
+          "reports"
+        ],
+        "additionalProperties": false
+      },
       "CheckList": {
         "type": "object",
         "properties": {
@@ -2950,11 +3896,248 @@
           }
         }
       }
+    },
+    "/api/manual-reports": {
+      "get": {
+        "summary": "Bought reports for a vehicle, newest first",
+        "tags": [
+          "manual"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "in": "query",
+            "name": "registration",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 17
+            },
+            "in": "query",
+            "name": "vin",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReportList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Record the findings of a bought report",
+        "tags": [
+          "manual"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualReportBodyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/manual-reports/{id}": {
+      "get": {
+        "summary": "One bought report",
+        "tags": [
+          "manual"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Correct a bought report",
+        "tags": [
+          "manual"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualReportBodyInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a bought report",
+        "tags": [
+          "manual"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
     {
       "name": "checks"
+    },
+    {
+      "name": "manual"
     },
     {
       "name": "system"
