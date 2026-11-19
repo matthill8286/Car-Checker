@@ -54,9 +54,10 @@ services:
   postgres:
     <<: *app
     image: postgres:17-alpine
+    # POSTGRES_PASSWORD comes from .env.
+    env_file: [.env]
     environment:
       POSTGRES_USER: carcheck
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       POSTGRES_DB: carcheck
     volumes:
       - pgdata:/var/lib/postgresql/data
