@@ -28,6 +28,18 @@ const ConfigSchema = z.object({
   CACHE_TTL_HOURS: z.coerce.number().nonnegative().optional(),
   SOURCE_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 
+  /** Schedule background jobs with pg-boss. Needs DATABASE_URL; jobs can always be run by hand. */
+  JOBS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  /** When to call DVLA and DVSA so their keys never go idle (cron, Europe/London). Weekly. */
+  KEEPALIVE_CRON: z.string().default('0 6 * * 1'),
+  /** Registration the keep-alive looks up. Any valid UK reg works; "not found" still counts. */
+  KEEPALIVE_REG: z.string().default('AB12CDE'),
+  /** When to re-check every saved vehicle (cron, Europe/London). Unset means never. */
+  REFRESH_CRON: z.string().optional(),
+
   DVLA_API_KEY: z.string().optional(),
   DVLA_BASE_URL: z
     .string()

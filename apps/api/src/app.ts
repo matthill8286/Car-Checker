@@ -24,7 +24,10 @@ import { InMemoryCheckStore, PostgresCheckStore, type CheckStore } from './check
 import type { Config } from './config.js';
 import { connect, type Database } from './db/client.js';
 import { FetchHttpClient, FixtureHttpClient, type HttpClient } from './http/client.js';
+import { JobRunner } from './jobs/runner.js';
+import { refreshSaved, sourceKeepAlive } from './jobs/tasks.js';
 import { checkRoutes } from './routes/checks.js';
+import { jobRoutes } from './routes/jobs.js';
 import { healthRoutes } from './routes/health.js';
 import { manualRoutes } from './routes/manual.js';
 import { vehicleRoutes } from './routes/vehicles.js';
@@ -47,6 +50,8 @@ export interface AppOverrides {
   manualReports?: ManualReportStore;
   vehicles?: VehicleStore;
   now?: () => Date;
+  /** Start the pg-boss scheduler when DATABASE_URL is set. Default true; tests turn it off. */
+  scheduleJobs?: boolean;
   /** Simulated latency per fixture request, so the UI can show sources arriving one by one. */
   fixtureLatencyMs?: number;
 }
@@ -141,10 +146,49 @@ export async function buildApp(
     now: overrides.now,
   });
 
+  const now = overrides.now ?? (() => new Date());
+  const runner = new JobRunner(
+    [
+      {
+        name: 'source-keepalive',
+        description: 'Looks up one registration at DVLA and DVSA so neither API key goes idle.',
+        schedule: config.KEEPALIVE_CRON,
+        task: () =>
+          sourceKeepAlive({
+            adapters,
+            http,
+            registration: config.KEEPALIVE_REG,
+            timeoutMs: config.SOURCE_TIMEOUT_MS,
+            now,
+          }),
+      },
+      {
+        name: 'refresh-saved',
+        description: 'Runs a new check for every vehicle in the garage.',
+        schedule: config.REFRESH_CRON ?? null,
+        task: () => refreshSaved({ vehicles, orchestrator, log: app.log }),
+      },
+    ],
+    app.log,
+    now,
+  );
+  if (config.JOBS_ENABLED && config.DATABASE_URL && (overrides.scheduleJobs ?? true)) {
+    const url = config.DATABASE_URL;
+    app.addHook('onReady', async () => {
+      try {
+        await runner.start(url);
+      } catch (err) {
+        app.log.error({ err }, 'job scheduler failed to start; jobs can still be run by hand');
+      }
+    });
+    app.addHook('onClose', () => runner.stop());
+  }
+
   await app.register(healthRoutes({ adapters, mock: http.mock, version: VERSION, storage }));
   await app.register(checkRoutes({ orchestrator, store, events }));
   await app.register(manualRoutes({ store: manualReports }));
   await app.register(vehicleRoutes({ store: vehicles }));
+  await app.register(jobRoutes({ runner }));
 
   return app;
 }

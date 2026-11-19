@@ -1970,6 +1970,96 @@
           "links"
         ]
       },
+      "JobNameInput": {
+        "type": "string",
+        "enum": [
+          "source-keepalive",
+          "refresh-saved"
+        ]
+      },
+      "JobRunInput": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "item",
+                "outcome"
+              ]
+            }
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "manual"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "summary",
+          "details",
+          "startedAt",
+          "finishedAt",
+          "trigger"
+        ]
+      },
+      "JobInfoInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/JobNameInput"
+          },
+          "description": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobRunInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "schedule",
+          "lastRun"
+        ]
+      },
       "HealthInput": {
         "type": "object",
         "properties": {
@@ -4114,6 +4204,99 @@
         ],
         "additionalProperties": false
       },
+      "JobName": {
+        "type": "string",
+        "enum": [
+          "source-keepalive",
+          "refresh-saved"
+        ]
+      },
+      "JobRun": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "item",
+                "outcome"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "finishedAt": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "manual"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "summary",
+          "details",
+          "startedAt",
+          "finishedAt",
+          "trigger"
+        ],
+        "additionalProperties": false
+      },
+      "JobInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/JobName"
+          },
+          "description": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "schedule",
+          "lastRun"
+        ],
+        "additionalProperties": false
+      },
       "Health": {
         "type": "object",
         "properties": {
@@ -4796,6 +4979,82 @@
             }
           },
           "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs": {
+      "get": {
+        "summary": "Background jobs, their schedules and last runs",
+        "tags": [
+          "system"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scheduling": {
+                      "type": "boolean"
+                    },
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/JobInfo"
+                      }
+                    }
+                  },
+                  "required": [
+                    "scheduling",
+                    "jobs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{name}/run": {
+      "post": {
+        "summary": "Run a job now and wait for it to finish",
+        "tags": [
+          "system"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/JobNameInput"
+            },
+            "in": "path",
+            "name": "name",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobRun"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Default Response",
             "content": {
               "application/json": {
