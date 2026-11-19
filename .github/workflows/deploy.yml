@@ -1,0 +1,179 @@
+name: Deploy
+
+# Builds images to GHCR and deploys them to the netcup box over SSH: are built and deployed with the
+# commit's tag once CI on that commit is green. Until the secrets exist, it skips cleanly.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, branch or tag to deploy
+        required: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  prepare:
+    name: Check deployment configuration
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      ready: ${{ steps.config.outputs.ready }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+      - name: Check required secrets
+        id: config
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          CARCHECK_ENV: ${{ secrets.CARCHECK_ENV }}
+          CARCHECK_URL: ${{ secrets.CARCHECK_URL }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          if [ "$MANUAL" = true ]; then
+            bash scripts/check-deploy-config.sh --required
+          else
+            bash scripts/check-deploy-config.sh
+          fi
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.ready == 'true'
+        with:
+          ref: ${{ inputs.ref || github.event.workflow_run.head_sha || github.sha }}
+      - name: Resolve the exact release commit
+        if: steps.config.outputs.ready == 'true'
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build images
+    needs: prepare
+    if: needs.prepare.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - image: carcheck-api
+            dockerfile: apps/api/Dockerfile
+          - image: carcheck-web
+            dockerfile: apps/web/Dockerfile
+          - image: carcheck-caddy
+            dockerfile: deploy/caddy/Dockerfile
+            context: deploy/caddy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context || '.' }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          build-args: API_INTERNAL_URL=http://api:4000
+          tags: |
+            ${{ env.REGISTRY }}/${{ matrix.image }}:${{ needs.prepare.outputs.sha }}
+            ${{ env.REGISTRY }}/${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    name: Deploy to the box
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Authorise SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Ship the compose file and backup script
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -az -e "ssh -i ~/.ssh/id_ed25519" \
+            deploy/compose.yml deploy/backup.sh "$USER_NAME@$HOST:carcheck/"
+
+      # Rewritten from the secret on every deploy, so the box is never the only copy.
+      - name: Write the environment
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+          CARCHECK_ENV: ${{ secrets.CARCHECK_ENV }}
+        run: |
+          printf '%s\n' "$CARCHECK_ENV" | ssh -i ~/.ssh/id_ed25519 "$USER_NAME@$HOST" \
+            'umask 077 && cat > carcheck/.env'
+          ssh -i ~/.ssh/id_ed25519 "$USER_NAME@$HOST" \
+            "printf 'IMAGE_TAG=%s\nREGISTRY=%s\n' '${{ needs.prepare.outputs.sha }}' '${{ env.REGISTRY }}' >> carcheck/.env"
+
+      - name: Pull and restart
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_NAME: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$USER_NAME@$HOST" bash -se <<'REMOTE'
+          set -euo pipefail
+          cd carcheck
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker compose -f compose.yml pull
+          docker compose -f compose.yml up -d
+          docker image prune -f
+          REMOTE
+
+      - name: Check it answers
+        env:
+          CARCHECK_URL: ${{ secrets.CARCHECK_URL }}
+          CARCHECK_AUTH: ${{ secrets.CARCHECK_AUTH }}
+        run: |
+          # Behind basic auth: 401 without credentials still proves Caddy routes here, so pass
+          # them when the secret is set and accept 200; otherwise accept 401.
+          for i in $(seq 1 10); do
+            if [ -n "$CARCHECK_AUTH" ]; then
+              code=$(curl -s -o /dev/null -w '%{http_code}' -u "$CARCHECK_AUTH" --max-time 10 "$CARCHECK_URL/api/health" || true)
+              want=200
+            else
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$CARCHECK_URL/api/health" || true)
+              want=401
+            fi
+            echo "attempt $i: $code"
+            if [ "$code" = "$want" ]; then exit 0; fi
+            sleep 6
+          done
+          echo "Car check did not come up healthy." >&2
+          exit 1
