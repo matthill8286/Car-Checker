@@ -88,43 +88,45 @@ orchestrator will run VIN sources next.
 
 ## Deploying
 
-Two containers, `api` and `web`, built from the repo root:
+Car check runs on the netcup box on its own: its own Caddy, Postgres and Docker network, and
+nothing shared with the other apps there. Another app's Caddy already holds ports 80 and 443, so
+car check's Caddy serves `https://carcheck.impkt-apps.duckdns.org:8443` behind one basic-auth
+login. It gets its certificate from Let's Encrypt over the DNS challenge through DuckDNS, which
+needs no port 80. DuckDNS already answers every name under `impkt-apps.duckdns.org` with the
+box's address, so there is no DNS record to add.
 
-```bash
-cp .env.example .env   # set CARCHECK_MODE=live, keys, and PROXY_NETWORK
-docker compose up -d --build
-```
+Deploys run from GitHub Actions (`.github/workflows/deploy.yml`). After CI passes on `main`, it
+builds the `api`, `web` and `caddy` images to GHCR, copies `deploy/compose.yml` and
+`deploy/backup.sh` to `~/carcheck` on the box, writes `.env` from a secret, then pulls,
+restarts and checks the site answers. Until the secrets exist, the workflow skips itself.
 
-On the server, give the app its own database and role in the existing Postgres (not Supabase's
-internal one), then set `DATABASE_URL` in `.env`:
+Once, on the box: open the port with `sudo ufw allow 8443/tcp`.
 
-```sql
-CREATE ROLE carcheck LOGIN PASSWORD '…';
-CREATE DATABASE carcheck OWNER carcheck;
-```
+Secrets on the repo's `production` environment:
 
-The api container must be able to reach that Postgres: either put it on the Postgres container's
-Docker network or use the host's address.
+| Secret                                 | Value                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `DEPLOY_HOST`, `DEPLOY_USER`           | The box, and a user in the `docker` group                                                                     |
+| `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` | That user's private key, and `ssh-keyscan <host>` output                                                      |
+| `CARCHECK_ENV`                         | The box's `.env`, from `deploy/.env.example` (domain, DuckDNS token, login hash, database password, API keys) |
+| `CARCHECK_URL`                         | `https://carcheck.impkt-apps.duckdns.org:8443`, for the check after a deploy                                  |
+| `CARCHECK_AUTH`                        | Optional `user:password`, so that check can log in                                                            |
 
-The stack joins the existing reverse proxy's Docker network (`PROXY_NETWORK`) and publishes no
-ports. Point the chosen subdomain at it in the existing proxy: `/api` to `api:4000`, everything
-else to `web:3000`. If the proxy can only target one upstream, send everything to `web:3000`;
-Next forwards `/api` to the API itself. Do not add a second proxy, and keep proxy buffering off
-for `/api/checks/*/stream` (the API sends `X-Accel-Buffering: no`).
+Run it by hand from the Actions tab ("Deploy", "Run workflow") once the secrets are set.
 
-For a local container run without the server's proxy:
+For a local container run without the box:
 `docker compose -f docker-compose.yml -f docker-compose.local.yml up --build` (mock mode, its own
 Postgres on port 5433, web on 3000 and api on 4000).
 
 ### Backups
 
 `deploy/backup.sh` dumps the `carcheck` database, keeps 14 days of dumps on the server and
-copies each one off the box with rsync. Copy `deploy/backup.env.example` to `deploy/backup.env`,
-set `PG_CONTAINER` (the existing Postgres container) or `DATABASE_URL`, and `BACKUP_REMOTE`, then
-add it to cron:
+copies each one off the box with rsync. The deploy copies the script to `~/carcheck`; on the box, create
+`~/carcheck/backup.env` from `deploy/backup.env.example` with `PG_CONTAINER=carcheck-postgres-1`,
+`BACKUP_DIR=$HOME/carcheck/backups` and `BACKUP_REMOTE`, then add it to the deploy user's cron:
 
 ```cron
-15 3 * * * /opt/car-check/deploy/backup.sh >> /var/log/carcheck-backup.log 2>&1
+15 3 * * * $HOME/carcheck/backup.sh >> $HOME/carcheck/backup.log 2>&1
 ```
 
 Restore with `gunzip -c carcheck-<stamp>.sql.gz | psql "$DATABASE_URL"`. Test a restore once
