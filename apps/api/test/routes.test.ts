@@ -31,6 +31,7 @@ describe('GET /api/health', () => {
       'dvsa_mot',
       'rdw',
       'nhtsa_vpic',
+      'manual',
     ]);
   });
 
@@ -43,6 +44,7 @@ describe('GET /api/health', () => {
       dvsa_mot: false,
       rdw: true,
       nhtsa_vpic: true,
+      manual: true,
     });
   });
 });
@@ -91,6 +93,7 @@ describe('GET /api/checks/:id', () => {
     expect(check.sources.map((s) => [s.source, s.status, s.mock])).toEqual([
       ['dvla', 'ok', true],
       ['dvsa_mot', 'ok', true],
+      ['manual', 'not_found', false],
     ]);
     expect(check.record?.facts).toMatchObject({ make: 'BMW', model: '320D', taxStatus: 'SORN' });
     expect(check.record?.provenance).toMatchObject({ make: 'dvla', model: 'dvsa_mot' });
@@ -121,16 +124,16 @@ describe('GET /api/checks/:id', () => {
     app = await testApp({ CARCHECK_MODE: 'live' });
     const check = await finished((await startCheck('AB12CDE')).json().check.id);
     expect(check.status).toBe('failed');
-    expect(check.sources.map((s) => s.status)).toEqual(['skipped', 'skipped']);
+    expect(check.sources.map((s) => s.status)).toEqual(['skipped', 'skipped', 'not_found']);
   });
 
   it('runs the Dutch and VIN sources', async () => {
     app = await testApp();
     const nl = await finished((await startCheck('ZK-472-T')).json().check.id);
-    expect(nl.sources.map((s) => s.source)).toEqual(['rdw']);
+    expect(nl.sources.map((s) => s.source)).toEqual(['rdw', 'manual']);
     expect(nl.record?.facts.country).toBe('NL');
     const vin = await finished((await startCheck('1HGCM82633A004352')).json().check.id);
-    expect(vin.sources.map((s) => s.source)).toEqual(['nhtsa_vpic']);
+    expect(vin.sources.map((s) => s.source)).toEqual(['nhtsa_vpic', 'manual']);
     expect(vin.record?.facts.modelYear).toBe(2003);
   });
 
@@ -201,6 +204,8 @@ describe('OpenAPI', () => {
       '/api/checks/{id}',
       '/api/checks/{id}/stream',
       '/api/health',
+      '/api/manual-reports',
+      '/api/manual-reports/{id}',
     ]);
     expect(doc.components.schemas).toHaveProperty('Check');
     expect(doc.components.schemas).toHaveProperty('VehicleRecord');

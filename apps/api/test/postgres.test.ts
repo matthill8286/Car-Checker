@@ -134,7 +134,7 @@ describe('API on Postgres', () => {
 
     const first = await run('WX65ABC');
     expect(first.status).toBe('complete');
-    expect(first.sources.map((s) => s.cached)).toEqual([false, false]);
+    expect(first.sources.map((s) => s.cached)).toEqual([false, false, false]);
 
     const rows = await db.select().from(sourceResponses);
     expect(rows.map((r) => [r.source, r.outcome, r.checkId]).sort()).toEqual([
@@ -152,7 +152,13 @@ describe('API on Postgres', () => {
     await run('AB12CDE');
 
     const second = await run('ab12 cde');
-    expect(second.sources.every((s) => s.cached && s.status === 'ok')).toBe(true);
+    expect(
+      second.sources
+        .filter((s) => s.source !== 'manual')
+        .every((s) => s.cached && s.status === 'ok'),
+    ).toBe(true);
+    // Bought reports are read fresh every time.
+    expect(second.sources.find((s) => s.source === 'manual')?.cached).toBe(false);
     expect(second.sources[0]?.fetchedAt).toBe(NOW.toISOString());
     expect(second.record?.motTests).toHaveLength(10);
 

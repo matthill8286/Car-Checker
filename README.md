@@ -36,13 +36,16 @@ is reported as skipped rather than failing the check.
 
 ## API
 
-| Route                        |                                                                                                                   |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `POST /api/checks`           | `{ "query": "AB12 CDE", "hint": "auto" \| "GB" \| "NL" \| "VIN", "fresh": false }` → `202` with the running check |
-| `GET /api/checks/:id`        | The check, its per-source status and the merged record so far                                                     |
-| `GET /api/checks/:id/stream` | Server-sent events: `snapshot`, then `source` and `record` as sources answer, then `complete`                     |
-| `GET /api/health`            | Mode and which sources are configured                                                                             |
-| `GET /api/docs`              | Swagger UI; `GET /api/openapi.json` for the document                                                              |
+| Route                                        |                                                                                                                   |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `POST /api/checks`                           | `{ "query": "AB12 CDE", "hint": "auto" \| "GB" \| "NL" \| "VIN", "fresh": false }` → `202` with the running check |
+| `GET /api/checks/:id`                        | The check, its per-source status and the merged record so far                                                     |
+| `GET /api/checks/:id/stream`                 | Server-sent events: `snapshot`, then `source` and `record` as sources answer, then `complete`                     |
+| `GET /api/health`                            | Mode and which sources are configured                                                                             |
+| `GET /api/manual-reports?registration=&vin=` | Bought reports for a vehicle, newest first                                                                        |
+| `POST /api/manual-reports`                   | Record what a bought report found (finance, stolen, write-off, keepers, plate changes, provider and cost)         |
+| `PUT` / `DELETE /api/manual-reports/:id`     | Correct or remove a bought report                                                                                 |
+| `GET /api/docs`                              | Swagger UI; `GET /api/openapi.json` for the document                                                              |
 
 ## Storage and caching
 
@@ -116,3 +119,11 @@ add it to cron:
 
 Restore with `gunzip -c carcheck-<stamp>.sql.gz | psql "$DATABASE_URL"`. Test a restore once
 after setting it up.
+
+## Bought reports
+
+Finance, theft and write-off records only exist in paid checks (HPI, Total Car Check,
+carVertical and others). Buy one per car, then use "Record a bought report" on the report page.
+The `manual` source adds every bought report saved for the registration or VIN to each check,
+so its findings sit in the same verdict as the free data. It reads the local database, so it is
+never cached and saving a report then re-running the check shows it straight away.

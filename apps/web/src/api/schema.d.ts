@@ -208,6 +208,209 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/manual-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bought reports for a vehicle, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    registration?: string;
+                    vin?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ManualReportList"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Record the findings of a bought report */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ManualReportBodyInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ManualReport"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manual-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One bought report */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ManualReport"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        /** Correct a bought report */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ManualReportBodyInput"];
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ManualReport"];
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Delete a bought report */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": null;
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -253,7 +456,7 @@ export interface components {
         };
         IdentifierInput: components["schemas"]["UkRegIdentifierInput"] | components["schemas"]["NlPlateIdentifierInput"] | components["schemas"]["VinIdentifierInput"];
         /** @enum {string} */
-        SourceIdInput: "dvla" | "dvsa_mot" | "rdw" | "nhtsa_vpic";
+        SourceIdInput: "dvla" | "dvsa_mot" | "rdw" | "nhtsa_vpic" | "manual";
         /** @enum {string} */
         DefectTypeInput: "advisory" | "minor" | "major" | "dangerous" | "fail" | "prs" | "non_specific" | "system_generated" | "user_entered";
         DefectInput: {
@@ -349,7 +552,7 @@ export interface components {
         InsightInput: {
             rule: string;
             /** @enum {string} */
-            area: "mileage" | "mot" | "defects" | "sources" | "status";
+            area: "mileage" | "mot" | "defects" | "sources" | "status" | "provenance";
             severity: components["schemas"]["InsightSeverityInput"];
             title: string;
             detail: string | null;
@@ -416,6 +619,94 @@ export interface components {
             items: components["schemas"]["InsightInput"][];
             verdict: components["schemas"]["VerdictInput"];
         };
+        /** @enum {string} */
+        FlagStatusInput: "clear" | "recorded" | "not_checked";
+        /** @enum {string} */
+        WriteOffCategoryInput: "A" | "B" | "C" | "D" | "S" | "N";
+        PlateChangeInput: {
+            from: string;
+            to: string;
+            /** @default null */
+            date: string | null;
+        };
+        ManualReportBodyInput: {
+            /** @default null */
+            registration: string | null;
+            /** @default null */
+            vin: string | null;
+            provider: string;
+            /** Format: date */
+            purchasedOn: string;
+            costPence: number;
+            /** @default null */
+            reference: string | null;
+            finance: {
+                status: components["schemas"]["FlagStatusInput"];
+                /** @default null */
+                detail: string | null;
+            };
+            stolen: {
+                status: components["schemas"]["FlagStatusInput"];
+                /** @default null */
+                detail: string | null;
+            };
+            writeOff: {
+                status: components["schemas"]["FlagStatusInput"];
+                /** @default null */
+                category: components["schemas"]["WriteOffCategoryInput"] | null;
+                /** @default null */
+                date: string | null;
+            };
+            /** @default not_checked */
+            scrapped: components["schemas"]["FlagStatusInput"];
+            /** @default not_checked */
+            imported: components["schemas"]["FlagStatusInput"];
+            /** @default not_checked */
+            exported: components["schemas"]["FlagStatusInput"];
+            /** @default null */
+            previousKeepers: number | null;
+            /** @default [] */
+            keeperChanges: string[];
+            /** @default [] */
+            plateChanges: components["schemas"]["PlateChangeInput"][];
+            /** @default null */
+            notes: string | null;
+        };
+        ManualReportInput: {
+            id: string;
+            registration: string | null;
+            vin: string | null;
+            provider: string;
+            purchasedOn: string;
+            costPence: number;
+            reference: string | null;
+            finance: {
+                status: components["schemas"]["FlagStatusInput"];
+                detail: string | null;
+            };
+            stolen: {
+                status: components["schemas"]["FlagStatusInput"];
+                detail: string | null;
+            };
+            writeOff: {
+                status: components["schemas"]["FlagStatusInput"];
+                category: components["schemas"]["WriteOffCategoryInput"] | null;
+                date: string | null;
+            };
+            scrapped: components["schemas"]["FlagStatusInput"];
+            imported: components["schemas"]["FlagStatusInput"];
+            exported: components["schemas"]["FlagStatusInput"];
+            previousKeepers: number | null;
+            keeperChanges: string[];
+            plateChanges: {
+                from: string;
+                to: string;
+                date: string | null;
+            }[];
+            notes: string | null;
+            createdAt: string;
+            updatedAt: string;
+        };
         VehicleRecordInput: {
             facts: components["schemas"]["VehicleFactsInput"];
             provenance: {
@@ -424,6 +715,7 @@ export interface components {
             conflicts: components["schemas"]["FactConflictInput"][];
             motTests: components["schemas"]["MotTestInput"][];
             mileage: components["schemas"]["MileageSummaryInput"];
+            manualReports?: components["schemas"]["ManualReportInput"][];
             insights?: components["schemas"]["RecordInsightsInput"];
         };
         CreateCheckBodyInput: {
@@ -512,6 +804,9 @@ export interface components {
                 message: string | null;
             }[];
         };
+        ManualReportListInput: {
+            reports: components["schemas"]["ManualReportInput"][];
+        };
         CheckListInput: {
             checks: components["schemas"]["CheckSummaryInput"][];
         };
@@ -556,7 +851,7 @@ export interface components {
         };
         Identifier: components["schemas"]["UkRegIdentifier"] | components["schemas"]["NlPlateIdentifier"] | components["schemas"]["VinIdentifier"];
         /** @enum {string} */
-        SourceId: "dvla" | "dvsa_mot" | "rdw" | "nhtsa_vpic";
+        SourceId: "dvla" | "dvsa_mot" | "rdw" | "nhtsa_vpic" | "manual";
         /** @enum {string} */
         DefectType: "advisory" | "minor" | "major" | "dangerous" | "fail" | "prs" | "non_specific" | "system_generated" | "user_entered";
         Defect: {
@@ -652,7 +947,7 @@ export interface components {
         Insight: {
             rule: string;
             /** @enum {string} */
-            area: "mileage" | "mot" | "defects" | "sources" | "status";
+            area: "mileage" | "mot" | "defects" | "sources" | "status" | "provenance";
             severity: components["schemas"]["InsightSeverity"];
             title: string;
             detail: string | null;
@@ -719,6 +1014,94 @@ export interface components {
             items: components["schemas"]["Insight"][];
             verdict: components["schemas"]["Verdict"];
         };
+        /** @enum {string} */
+        FlagStatus: "clear" | "recorded" | "not_checked";
+        /** @enum {string} */
+        WriteOffCategory: "A" | "B" | "C" | "D" | "S" | "N";
+        PlateChange: {
+            from: string;
+            to: string;
+            /** @default null */
+            date: string | null;
+        };
+        ManualReportBody: {
+            /** @default null */
+            registration: string | null;
+            /** @default null */
+            vin: string | null;
+            provider: string;
+            /** Format: date */
+            purchasedOn: string;
+            costPence: number;
+            /** @default null */
+            reference: string | null;
+            finance: {
+                status: components["schemas"]["FlagStatus"];
+                /** @default null */
+                detail: string | null;
+            };
+            stolen: {
+                status: components["schemas"]["FlagStatus"];
+                /** @default null */
+                detail: string | null;
+            };
+            writeOff: {
+                status: components["schemas"]["FlagStatus"];
+                /** @default null */
+                category: components["schemas"]["WriteOffCategory"] | null;
+                /** @default null */
+                date: string | null;
+            };
+            /** @default not_checked */
+            scrapped: components["schemas"]["FlagStatus"];
+            /** @default not_checked */
+            imported: components["schemas"]["FlagStatus"];
+            /** @default not_checked */
+            exported: components["schemas"]["FlagStatus"];
+            /** @default null */
+            previousKeepers: number | null;
+            /** @default [] */
+            keeperChanges: string[];
+            /** @default [] */
+            plateChanges: components["schemas"]["PlateChange"][];
+            /** @default null */
+            notes: string | null;
+        };
+        ManualReport: {
+            id: string;
+            registration: string | null;
+            vin: string | null;
+            provider: string;
+            purchasedOn: string;
+            costPence: number;
+            reference: string | null;
+            finance: {
+                status: components["schemas"]["FlagStatus"];
+                detail: string | null;
+            };
+            stolen: {
+                status: components["schemas"]["FlagStatus"];
+                detail: string | null;
+            };
+            writeOff: {
+                status: components["schemas"]["FlagStatus"];
+                category: components["schemas"]["WriteOffCategory"] | null;
+                date: string | null;
+            };
+            scrapped: components["schemas"]["FlagStatus"];
+            imported: components["schemas"]["FlagStatus"];
+            exported: components["schemas"]["FlagStatus"];
+            previousKeepers: number | null;
+            keeperChanges: string[];
+            plateChanges: {
+                from: string;
+                to: string;
+                date: string | null;
+            }[];
+            notes: string | null;
+            createdAt: string;
+            updatedAt: string;
+        };
         VehicleRecord: {
             facts: components["schemas"]["VehicleFacts"];
             provenance: {
@@ -727,6 +1110,7 @@ export interface components {
             conflicts: components["schemas"]["FactConflict"][];
             motTests: components["schemas"]["MotTest"][];
             mileage: components["schemas"]["MileageSummary"];
+            manualReports?: components["schemas"]["ManualReport"][];
             insights?: components["schemas"]["RecordInsights"];
         };
         CreateCheckBody: {
@@ -814,6 +1198,9 @@ export interface components {
                 available: boolean;
                 message: string | null;
             }[];
+        };
+        ManualReportList: {
+            reports: components["schemas"]["ManualReport"][];
         };
         CheckList: {
             checks: components["schemas"]["CheckSummary"][];

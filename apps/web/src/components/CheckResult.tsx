@@ -1,5 +1,6 @@
 import type { SourceId } from '@carcheck/core';
 import type { Check } from '@/api/client';
+import { BoughtReports } from './BoughtReports';
 import { DefectHeatmap } from './DefectHeatmap';
 import { DefectTable } from './DefectTable';
 import { InsightList, VerdictPanel } from './Insights';
@@ -225,10 +226,14 @@ export function CheckResult({
   check,
   onSearchAs,
   onRefresh,
+  onRecheck,
 }: {
   check: Check;
   onSearchAs: (kind: 'uk_reg' | 'nl_plate' | 'vin') => void;
+  /** Asks every source again. */
   onRefresh: () => void;
+  /** Runs the check again, reusing cached free data; used after a bought report changes. */
+  onRecheck: () => void;
 }) {
   const anyCached = check.sources.some((s) => s.cached);
   const record = check.record;
@@ -288,7 +293,11 @@ export function CheckResult({
         ))}
       </ul>
 
-      <VerdictPanel insights={record?.insights} runs={check.sources} />
+      <VerdictPanel
+        insights={record?.insights}
+        reports={record?.manualReports ?? []}
+        runs={check.sources}
+      />
       <Panel
         title="Summary"
         runs={check.sources}
@@ -335,6 +344,7 @@ export function CheckResult({
           </div>
         )}
       </Panel>
+      <BoughtReports check={check} onChanged={onRecheck} />
       <MileagePanel record={record} runs={check.sources} />
       <DefectsPanel record={record} runs={check.sources} />
       <MotHistory record={record} runs={check.sources} />
