@@ -55,6 +55,8 @@ export const CheckSchema = z
     record: VehicleRecordSchema.nullable(),
     createdAt: z.string(),
     completedAt: z.string().nullable(),
+    /** The garage vehicle this check was filed under, once it finished with a record. */
+    vehicleId: z.string().nullable().optional(),
   })
   .meta({ id: 'Check' });
 export type Check = z.infer<typeof CheckSchema>;

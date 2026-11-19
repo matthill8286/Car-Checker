@@ -40,6 +40,7 @@ const check: Check = {
   record: null,
   createdAt: '2026-11-18T12:00:00.000Z',
   completedAt: null,
+  vehicleId: null,
 };
 
 describe('PostgresCheckStore', () => {

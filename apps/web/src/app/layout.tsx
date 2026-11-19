@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
 
@@ -11,6 +12,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-GB">
       <body>
+        <nav className="site-nav" aria-label="Main">
+          <Link href="/" className="site-name">
+            Car Check
+          </Link>
+          <Link href="/">New check</Link>
+          <Link href="/garage">Garage</Link>
+        </nav>
         {children}
         <footer className="attribution">
           Contains public sector information licensed under the{' '}
