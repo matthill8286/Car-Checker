@@ -88,29 +88,27 @@ orchestrator will run VIN sources next.
 
 ## Deploying
 
-Car check runs on the netcup box on its own: its own Caddy, Postgres and Docker network, and
-nothing shared with the other apps there. Another app's Caddy already holds ports 80 and 443, so
-car check's Caddy serves `https://carcheck.impkt-apps.duckdns.org:8443` behind one basic-auth
-login. It gets its certificate from Let's Encrypt over the DNS challenge through DuckDNS, which
-needs no port 80. DuckDNS already answers every name under `impkt-apps.duckdns.org` with the
-box's address, so there is no DNS record to add.
+Car check runs on the netcup box with its own Caddy, Postgres and Docker network. The box's public
+edge Caddy serves `https://carcheck.weareimpakt.com`, gets its certificate from Let's Encrypt, and
+forwards to car check's Caddy over the `carcheck_default` network on port 8080. Car check's Caddy
+puts one basic-auth login in front of the whole site and publishes no port on the host.
+`carcheck.weareimpakt.co.uk` and the old `carcheck.impkt-apps.duckdns.org` redirect to the new
+address. The DNS records are A records for the box at names.co.uk.
 
 Deploys run from GitHub Actions (`.github/workflows/deploy.yml`). After CI passes on `main`, it
 builds the `api`, `web` and `caddy` images to GHCR, copies `deploy/compose.yml` and
 `deploy/backup.sh` to `~/carcheck` on the box, writes `.env` from a secret, then pulls,
 restarts and checks the site answers. Until the secrets exist, the workflow skips itself.
 
-Once, on the box: open the port with `sudo ufw allow 8443/tcp`.
-
 Secrets on the repo's `production` environment:
 
-| Secret                                 | Value                                                                                                         |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `DEPLOY_HOST`, `DEPLOY_USER`           | The box, and a user in the `docker` group                                                                     |
-| `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` | That user's private key, and `ssh-keyscan <host>` output                                                      |
-| `CARCHECK_ENV`                         | The box's `.env`, from `deploy/.env.example` (domain, DuckDNS token, login hash, database password, API keys) |
-| `CARCHECK_URL`                         | `https://carcheck.impkt-apps.duckdns.org:8443`, for the check after a deploy                                  |
-| `CARCHECK_AUTH`                        | Optional `user:password`, so that check can log in                                                            |
+| Secret                                 | Value                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------- |
+| `DEPLOY_HOST`, `DEPLOY_USER`           | The box, and a user in the `docker` group                                              |
+| `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` | That user's private key, and `ssh-keyscan <host>` output                               |
+| `CARCHECK_ENV`                         | The box's `.env`, from `deploy/.env.example` (login hash, database password, API keys) |
+| `CARCHECK_URL`                         | `https://carcheck.weareimpakt.com`, for the check after a deploy                       |
+| `CARCHECK_AUTH`                        | Optional `user:password`, so that check can log in                                     |
 
 Run it by hand from the Actions tab ("Deploy", "Run workflow") once the secrets are set.
 

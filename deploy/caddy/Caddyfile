@@ -1,17 +1,12 @@
-# Car check's own proxy. It listens on 8443 only: Strata's Caddy owns 80 and 443 on this box.
-# The certificate comes from Let's Encrypt over the DNS challenge, through DuckDNS.
+# Car check's own proxy. The box's public edge Caddy terminates HTTPS for
+# carcheck.weareimpakt.com and forwards here over the stack's Docker network, so this one
+# serves plain HTTP on 8080 and publishes no port on the host.
 {
-	email {$ACME_EMAIL}
-	# Nothing here may bind port 80 or 443.
-	http_port 8081
-	https_port 8443
-	auto_https disable_redirects
+	auto_https off
+	admin off
 }
 
-{$CARCHECK_DOMAIN}:8443 {
-	tls {
-		dns duckdns {$DUCKDNS_TOKEN}
-	}
+:8080 {
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
