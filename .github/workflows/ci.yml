@@ -1,9 +1,10 @@
 name: CI
 
+# CI runs on pull requests and by hand only. Merging into main deploys (see deploy.yml),
+# because the pull request has already been checked.
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   check:
